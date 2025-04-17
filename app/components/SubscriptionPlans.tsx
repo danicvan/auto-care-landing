@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Fade } from "./animation"
+import { useRouter } from "next/navigation";
 
 const plans = [
   {
@@ -31,7 +32,8 @@ const plans = [
 ]
 
 export default function SubscriptionPlans() {
-  const [isAnnual, setIsAnnual] = useState(false)
+  const [isAnnual, setIsAnnual] = useState(false);
+  const router = useRouter();
 
   const formatPrice = (price: number) => {
     return price.toLocaleString("pt-BR", {
@@ -47,6 +49,10 @@ export default function SubscriptionPlans() {
     return formatPrice(discountedPrice)
   }
 
+  const handleCheckoutPage = () => {
+    router.push('/checkout');
+  }
+  
   return (
     <section id="planos" className="py-20 bg-white dark:bg-gray-900">
       <div className="container mx-auto px-6">
@@ -99,7 +105,10 @@ export default function SubscriptionPlans() {
                   </li>
                 ))}
               </ul>
-              <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition-colors">
+              <button 
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition-colors"
+                onClick={handleCheckoutPage}
+              >
                 Escolher Plano
               </button>
               <p className="mt-4 text-sm text-center text-gray-600 dark:text-gray-400">
