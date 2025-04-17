@@ -3,23 +3,27 @@
 import { useState } from "react"
 import { Fade } from "./animation"
 import { useRouter } from "next/navigation";
+import { CheckoutButton } from "./CheckoutButton";
 
 const plans = [
   {
     name: "Básico",
     price: 199.99,
+    priceId: "price_123",
     features: ["Lavagem Exterior Mensal", "Brilho nos Pneus", "Aspiração do Interior"],
     recommended: false,
   },
   {
     name: "Premium",
     price: 349.99,
+    priceId: "price_456",
     features: ["Lavagem Exterior Quinzenal", "Brilho nos Pneus", "Aspiração do Interior", "Tratamento de Cera"],
     recommended: true,
   },
   {
     name: "Ultimate",
     price: 599.99,
+    priceId: "price_789",
     features: [
       "Lavagem Exterior Semanal",
       "Brilho nos Pneus",
@@ -47,10 +51,6 @@ export default function SubscriptionPlans() {
   const getDiscountedPrice = (price: number) => {
     const discountedPrice = isAnnual ? price * 0.9 * 12 : price
     return formatPrice(discountedPrice)
-  }
-
-  const handleCheckoutPage = () => {
-    router.push('/checkout');
   }
   
   return (
@@ -107,9 +107,8 @@ export default function SubscriptionPlans() {
               </ul>
               <button 
                 className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition-colors"
-                onClick={handleCheckoutPage}
               >
-                Escolher Plano
+                <CheckoutButton priceId={plan.priceId} customerEmail="example@client.com" />
               </button>
               <p className="mt-4 text-sm text-center text-gray-600 dark:text-gray-400">
                 Faturamento mensal com contrato anual
