@@ -108,7 +108,7 @@ export default function SubscriptionPlans() {
               <button 
                 className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition-colors"
               >
-                <CheckoutButton priceId={plan.priceId} customerEmail="example@client.com" />
+                <CheckoutButton priceId={plan.priceId} isAnnual={isAnnual} />
               </button>
               <p className="mt-4 text-sm text-center text-gray-600 dark:text-gray-400">
                 Faturamento mensal com contrato anual
