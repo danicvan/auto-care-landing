@@ -9,7 +9,7 @@ const plans = [
   {
     name: "Básico",
     price: 199.99,
-    priceId: "price_123",
+    priceId: "price_1REIDuEEDr7EYZ6Mmkj0r3Fp",
     features: ["Lavagem Exterior Mensal", "Brilho nos Pneus", "Aspiração do Interior"],
     recommended: false,
   },
