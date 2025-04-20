@@ -6,6 +6,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 export async function POST(req: Request) {
   const { priceId, isAnnual } = await req.json();
 
+  const mockUserId = "00000000-0000-0000-0000-000000000000";
+
   try {
     console.log("### BASE_URL:", process.env.BASE_URL);
 
@@ -25,6 +27,7 @@ export async function POST(req: Request) {
       },
       success_url: `${process.env.BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.BASE_URL}`,
+      expand: ['subscription'], 
     });
 
     return NextResponse.json({ sessionId: session.id });
