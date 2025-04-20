@@ -2,6 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { stripePromise } from "@/lib/stripe/client";
 
 export default function CheckoutPage() {
     const params = useSearchParams();
@@ -9,6 +10,9 @@ export default function CheckoutPage() {
 
     const priceId = params.get("priceId");
     const isAnnual = params.get("isAnnual");
+
+    console.log(`### priceId: ${priceId}`);
+    console.log(`### isAnnual: ${isAnnual}`);
 
     const handleStripeCheckout = async () => {
         const res = await fetch("/api/stripe/checkout", {
@@ -19,9 +23,24 @@ export default function CheckoutPage() {
             },
         });
 
-        const { sessionId } = await res.json();
-        const stripe = await (await import("@/lib/stripe/client")).stripePromise;
-        stripe?.redirectToCheckout({ sessionId });
+        const data = await res.json();
+        console.log("### stripe session response:", data);
+
+        if (!data.sessionId) {
+            console.error("SessionId não foi retornado!");
+            return;
+        }
+
+        const stripe = await stripePromise;
+
+        if (!stripe) {
+            console.error("Stripe não foi carregado corretamente.");
+            return;
+        }
+
+        stripe.redirectToCheckout({ sessionId: data.sessionId }).catch((err) => {
+            console.error("Erro no redirecionamento:", err.message);
+        });
     };
 
     useEffect(() => {

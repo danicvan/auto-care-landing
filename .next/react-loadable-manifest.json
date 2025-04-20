@@ -1,8 +1,1 @@
-{
-  "app/checkout/page.tsx -> @/lib/stripe/client": {
-    "id": "app/checkout/page.tsx -> @/lib/stripe/client",
-    "files": [
-      "static/chunks/_app-pages-browser_lib_stripe_client_ts.js"
-    ]
-  }
-}
+{}

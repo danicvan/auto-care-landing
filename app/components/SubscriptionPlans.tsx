@@ -16,14 +16,14 @@ const plans = [
   {
     name: "Premium",
     price: 349.99,
-    priceId: "price_456",
+    priceId: "price_1REIDuEEDr7EYZ6Mmkj0r3Fp",
     features: ["Lavagem Exterior Quinzenal", "Brilho nos Pneus", "Aspiração do Interior", "Tratamento de Cera"],
     recommended: true,
   },
   {
     name: "Ultimate",
     price: 599.99,
-    priceId: "price_789",
+    priceId: "price_1REIDuEEDr7EYZ6Mmkj0r3Fp",
     features: [
       "Lavagem Exterior Semanal",
       "Brilho nos Pneus",
