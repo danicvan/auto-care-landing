@@ -1,5 +1,1 @@
-{
-  "/api/stripe/checkout/route": "app/api/stripe/checkout/route.js",
-  "/page": "app/page.js",
-  "/checkout/page": "app/checkout/page.js"
-}
+{}
