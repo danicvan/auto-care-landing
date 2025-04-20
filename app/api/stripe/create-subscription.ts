@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { stripe } from "@/lib/stripe/server";
+import { stripe } from "@/lib/stripe";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
