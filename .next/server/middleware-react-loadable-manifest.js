@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{\"app/checkout/page.tsx -> @/lib/stripe/client\":{\"id\":\"app/checkout/page.tsx -> @/lib/stripe/client\",\"files\":[\"static/chunks/_app-pages-browser_lib_stripe_client_ts.js\"]}}"
+self.__REACT_LOADABLE_MANIFEST="{}"
