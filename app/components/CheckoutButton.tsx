@@ -1,21 +1,13 @@
-'use client';
+'use client'
 
-import { stripePromise } from "@/lib/stripe/client";
+import { useRouter } from 'next/navigation';
 
-export const CheckoutButton = ({ priceId, customerEmail }: { priceId: string, customerEmail: string }) => {
-    const handleCheckout = async () => {
-        const res = await fetch('/api/stripe/checkout', {
-            method: 'POST',
-            body: JSON.stringify({ priceId, customerEmail }),
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
+export const CheckoutButton = ({ priceId, isAnnual }: { priceId: string, isAnnual: boolean }) => {
+  const router = useRouter();
 
-        const { url } = await res.json();
-        const stripe = await stripePromise;
-        stripe?.redirectToCheckout({ sessionId: url })
-    }
+  const handleClick = () => {
+    router.push(`/checkout?priceId=${priceId}&isAnnual=${isAnnual}`);
+  };
 
-    return <button onClick={handleCheckout}>Subscribe</button>
-}
+  return <button onClick={handleClick}>Assinar</button>;
+};

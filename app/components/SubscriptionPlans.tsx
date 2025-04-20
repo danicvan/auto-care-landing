@@ -9,21 +9,21 @@ const plans = [
   {
     name: "Básico",
     price: 199.99,
-    priceId: "price_123",
+    priceId: "price_1REIDuEEDr7EYZ6Mmkj0r3Fp",
     features: ["Lavagem Exterior Mensal", "Brilho nos Pneus", "Aspiração do Interior"],
     recommended: false,
   },
   {
     name: "Premium",
     price: 349.99,
-    priceId: "price_456",
+    priceId: "price_1REIDuEEDr7EYZ6Mmkj0r3Fp",
     features: ["Lavagem Exterior Quinzenal", "Brilho nos Pneus", "Aspiração do Interior", "Tratamento de Cera"],
     recommended: true,
   },
   {
     name: "Ultimate",
     price: 599.99,
-    priceId: "price_789",
+    priceId: "price_1REIDuEEDr7EYZ6Mmkj0r3Fp",
     features: [
       "Lavagem Exterior Semanal",
       "Brilho nos Pneus",
@@ -108,7 +108,7 @@ export default function SubscriptionPlans() {
               <button 
                 className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition-colors"
               >
-                <CheckoutButton priceId={plan.priceId} customerEmail="example@client.com" />
+                <CheckoutButton priceId={plan.priceId} isAnnual={isAnnual} />
               </button>
               <p className="mt-4 text-sm text-center text-gray-600 dark:text-gray-400">
                 Faturamento mensal com contrato anual
