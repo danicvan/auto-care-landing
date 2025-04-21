@@ -42,7 +42,6 @@ export default function CheckoutForm() {
     if (result.error) {
       setError(result.error.message || 'Erro no pagamento');
     } else if (result.paymentIntent?.status === 'succeeded') {
-      // Redireciona para página de sucesso
       window.location.href = "/success";
     }
 
