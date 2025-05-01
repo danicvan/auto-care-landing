@@ -1,47 +1,56 @@
 import { stripe } from "@/lib/stripe";
-import type { NextApiRequest, NextApiResponse } from "next";
+import { supabase } from "@/lib/supabase";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") return res.status(405).end();
+export async function POST(req: NextRequest) {
+  const { productId, amount, isAnnual } = await req.json();
 
-  const { productId, amount, interval } = req.body;
-
-  if (!productId || !amount || !interval) {
-    return res.status(400).json({ error: "Missing parameters" });
+  if (!productId || !amount || isAnnual === undefined) {
+    return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
   }
 
   try {
-    // Busca todos os preços do produto
+    const interval = isAnnual ? "year" : "month";
+
+    // Buscar prices existentes para evitar duplicidade
     const prices = await stripe.prices.list({
       product: productId,
-      limit: 100,
       active: true,
+      limit: 100,
     });
 
-    // Verifica se já existe um preço igual
     const existing = prices.data.find(
-      (price) =>
-        price.unit_amount === amount &&
-        price.recurring?.interval === interval
+      (p) => p.unit_amount === amount && p.recurring?.interval === interval
     );
 
-    if (existing) {
-      return res.status(200).json({ priceId: existing.id });
+    const price = existing
+      ? existing
+      : await stripe.prices.create({
+          product: productId,
+          unit_amount: amount,
+          currency: "brl",
+          recurring: { interval },
+        });
+
+    // Salvar no Supabase
+    const { error } = await supabase.from("plans").insert([
+      {
+        product_id: productId,
+        price_id: price.id,
+        amount: amount / 100,
+        is_annual: isAnnual,
+      },
+    ]);
+
+    if (error) {
+      console.error("Erro ao salvar no Supabase:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Cria novo Price se não existir
-    const newPrice = await stripe.prices.create({
-      product: productId,
-      unit_amount: amount,
-      currency: "brl",
-      recurring: {
-        interval,
-      },
-    });
-
-    return res.status(201).json({ priceId: newPrice.id });
+    return NextResponse.json({ priceId: price.id });
   } catch (err: any) {
-    console.error("Stripe Price Error:", err);
-    return res.status(500).json({ error: err.message });
+    console.error("Erro Stripe:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
