@@ -54,6 +54,25 @@ export default function PlansAdminPage() {
     }
   }
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir este plano?')) return
+
+    try {
+      const res = await fetch(`/api/plans/delete/${id}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Erro ao excluir')
+      }
+
+      fetchPlans()
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
+
   return (
     <div className="max-w-3xl mx-auto mt-10 p-6 bg-white shadow rounded">
       <h1 className="text-2xl font-bold mb-4">Administração de Planos</h1>
@@ -110,6 +129,7 @@ export default function PlansAdminPage() {
               <th className="p-2 border">Preço (R$)</th>
               <th className="p-2 border">Recorrência</th>
               <th className="p-2 border">Criado em</th>
+              <th className="p-2 border">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -119,6 +139,14 @@ export default function PlansAdminPage() {
                 <td className="p-2 border">{Number(plan.amount).toFixed(2)}</td>
                 <td className="p-2 border">{plan.is_annual ? 'Anual' : 'Mensal'}</td>
                 <td className="p-2 border">{new Date(plan.created_at).toLocaleDateString()}</td>
+                <td className="p-2 border text-center">
+                  <button
+                    onClick={() => handleDelete(plan.id)}
+                    className="text-red-600 hover:underline text-sm"
+                  >
+                    Excluir
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
