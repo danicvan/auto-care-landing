@@ -18,11 +18,16 @@ export default function CheckoutForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
-    const res = await fetch('/api/stripe/create-payment-intent', {
+    const res = await fetch('/api/stripe/create-subscription', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ priceId, isAnnual }),
+      body: JSON.stringify({
+        user_id: "00000000-0000-0000-0000-000000000000", // Troque pelo user logado
+        email: "cliente@exemplo.com", // Troque pelo email do user logado
+        price_id: priceId,
+      }),
     });
 
     const data = await res.json();
