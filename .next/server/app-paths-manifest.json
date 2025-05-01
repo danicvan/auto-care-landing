@@ -1,6 +1,0 @@
-{
-  "/admin/planos/page": "app/admin/planos/page.js",
-  "/admin/page": "app/admin/page.js",
-  "/page": "app/page.js",
-  "/checkout/page": "app/checkout/page.js"
-}
