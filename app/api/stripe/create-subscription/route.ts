@@ -10,7 +10,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // 🔍 Verifica se o cliente já existe no Supabase ou cria um novo
     const customer = await stripe.customers.create({
       email,
       metadata: { user_id },
@@ -19,12 +18,11 @@ export async function POST(req: NextRequest) {
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
       items: [{ price: price_id }],
-      payment_behavior: "default_incomplete", // 🔥 necessário para checkout transparente
-      collection_method: "charge_automatically", // 🔥 necessário para criar payment_intent
-      expand: ["latest_invoice.payment_intent"], // 🔥 sem isso, o clientSecret não vem
+      payment_behavior: "default_incomplete",
+      collection_method: "charge_automatically",
+      expand: ["latest_invoice.payment_intent"],
     });
 
-    // ✅ Salva assinatura no Supabase
     const { error } = await supabase.from("subscriptions").insert([
       {
         user_id,
