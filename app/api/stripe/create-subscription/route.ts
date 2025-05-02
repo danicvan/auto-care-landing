@@ -20,6 +20,10 @@ export async function POST(req: NextRequest) {
       items: [{ price: price_id }],
       payment_behavior: "default_incomplete",
       collection_method: "charge_automatically",
+      payment_settings: {
+        payment_method_types: ['card'],
+        save_default_payment_method: 'on_subscription',
+      },
       expand: ["latest_invoice.payment_intent"],
     });
 
