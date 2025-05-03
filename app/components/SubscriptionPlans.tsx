@@ -1,62 +1,52 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Fade } from "./animation"
-import { useRouter } from "next/navigation";
-import { CheckoutButton } from "./CheckoutButton";
+import { CheckoutButton } from "./CheckoutButton"
 
-const plans = [
-  {
-    name: "Básico",
-    price: 199.99,
-    priceId: "price_1REIDuEEDr7EYZ6Mmkj0r3Fp",
-    features: ["Lavagem Exterior Mensal", "Brilho nos Pneus", "Aspiração do Interior"],
-    recommended: false,
-  },
-  {
-    name: "Premium",
-    price: 349.99,
-    priceId: "price_1REIDuEEDr7EYZ6Mmkj0r3Fp",
-    features: ["Lavagem Exterior Quinzenal", "Brilho nos Pneus", "Aspiração do Interior", "Tratamento de Cera"],
-    recommended: true,
-  },
-  {
-    name: "Ultimate",
-    price: 599.99,
-    priceId: "price_1REIDuEEDr7EYZ6Mmkj0r3Fp",
-    features: [
-      "Lavagem Exterior Semanal",
-      "Brilho nos Pneus",
-      "Detalhamento Completo do Interior",
-      "Tratamento de Cera",
-      "Proteção de Pintura",
-    ],
-    recommended: false,
-  },
-]
+interface Plan {
+  id: string
+  product_id: string
+  price_id: string
+  amount: number
+  is_annual: boolean
+  created_at: string
+}
 
 export default function SubscriptionPlans() {
-  const [isAnnual, setIsAnnual] = useState(false);
-  const router = useRouter();
+  const [plans, setPlans] = useState<Plan[]>([])
+  const [isAnnual, setIsAnnual] = useState(false)
+  const [loading, setLoading] = useState(true)
 
-  const formatPrice = (price: number) => {
-    return price.toLocaleString("pt-BR", {
+  const fetchPlans = async () => {
+    try {
+      const res = await fetch("/api/plans/list")
+      const data = await res.json()
+      setPlans(data)
+    } catch (err) {
+      console.error("Erro ao buscar planos:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchPlans()
+  }, [])
+
+  const filteredPlans = plans.filter((plan) => plan.is_annual === isAnnual)
+
+  const formatPrice = (price: number) =>
+    price.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
     })
-  }
 
-  const getDiscountedPrice = (price: number) => {
-    const discountedPrice = isAnnual ? price * 0.9 * 12 : price
-    return formatPrice(discountedPrice)
-  }
-  
   return (
     <section id="planos" className="py-20 bg-white dark:bg-gray-900">
       <div className="container mx-auto px-6">
         <h2 className="text-4xl font-bold mb-8 text-center">Planos de Assinatura</h2>
+
         <div className="flex justify-center items-center mb-8">
           <span className={`mr-2 ${isAnnual ? "text-gray-500" : "font-bold"}`}>Mensal</span>
           <button
@@ -67,31 +57,32 @@ export default function SubscriptionPlans() {
           >
             <div className="bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-300" />
           </button>
-          <span className={`ml-2 ${isAnnual ? "font-bold" : "text-gray-500"}`}>Anual (10% de desconto)</span>
+          <span className={`ml-2 ${isAnnual ? "font-bold" : "text-gray-500"}`}>Anual</span>
         </div>
-        <div className="grid md:grid-cols-3 gap-8">
-          {plans.map((plan, index) => (
-            <Fade
-              key={plan.name}
-              direction="up"
-              delay={index * 100}
-              className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-8 shadow-xl relative ${
-                plan.recommended ? "border-2 border-blue-500" : ""
-              }`}
-            >
-              {plan.recommended && (
-                <div className="absolute top-0 right-0 bg-blue-500 text-white px-2 py-1 rounded-bl-lg rounded-tr-lg">
-                  Recomendado
-                </div>
-              )}
-              <h3 className="text-2xl font-bold mb-4">{plan.name}</h3>
-              <p className="text-4xl font-bold mb-6">
-                {getDiscountedPrice(plan.price)}
-                <span className="text-xl font-normal">/{isAnnual ? "ano" : "mês"}</span>
-              </p>
-              <ul className="mb-8">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="mb-2 flex items-center">
+
+        {loading ? (
+          <p className="text-center text-gray-600">Carregando planos...</p>
+        ) : filteredPlans.length === 0 ? (
+          <p className="text-center text-gray-600">Nenhum plano encontrado.</p>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-8">
+            {filteredPlans.map((plan, index) => (
+              <Fade
+                key={plan.id}
+                direction="up"
+                delay={index * 100}
+                className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 shadow-xl relative"
+              >
+                <h3 className="text-2xl font-bold mb-4">
+                  {plan.is_annual ? "Plano Anual" : "Plano Mensal"}
+                </h3>
+                <p className="text-4xl font-bold mb-6">
+                  {formatPrice(plan.amount)}
+                  <span className="text-xl font-normal">/{isAnnual ? "ano" : "mês"}</span>
+                </p>
+
+                <ul className="mb-8">
+                  <li className="mb-2 flex items-center text-sm text-gray-700 dark:text-gray-300">
                     <svg
                       className="w-5 h-5 mr-2 text-blue-500"
                       fill="none"
@@ -101,21 +92,19 @@ export default function SubscriptionPlans() {
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                     </svg>
-                    {feature}
+                    Benefício 1 incluso
                   </li>
-                ))}
-              </ul>
-              <button 
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition-colors"
-              >
-                <CheckoutButton priceId={plan.priceId} isAnnual={isAnnual} />
-              </button>
-              <p className="mt-4 text-sm text-center text-gray-600 dark:text-gray-400">
-                Faturamento mensal com contrato anual
-              </p>
-            </Fade>
-          ))}
-        </div>
+                </ul>
+
+                <CheckoutButton priceId={plan.price_id} isAnnual={plan.is_annual} />
+
+                <p className="mt-4 text-sm text-center text-gray-600 dark:text-gray-400">
+                  Pagamento recorrente no Stripe
+                </p>
+              </Fade>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )

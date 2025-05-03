@@ -1,59 +1,60 @@
-import { supabase } from "@/lib/supabase";
-import { stripe } from "@/lib/stripe";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import Stripe from "stripe";
 
-export async function POST(req: NextRequest) {
-  const { user_id, email, price_id } = await req.json();
+// Inicializa o Stripe com sua chave secreta
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2022-11-15", // ou a versão ativa no seu dashboard
+});
 
-  if (!user_id || !email || !price_id) {
-    return NextResponse.json({ error: "Parâmetros ausentes." }, { status: 400 });
-  }
-
+export async function POST(req: Request) {
   try {
+    const body = await req.json();
+    const { email, price_id, user_id } = body;
+
+    // Verifica se todos os campos obrigatórios estão presentes
+    if (!email || !price_id || !user_id) {
+      return NextResponse.json(
+        { error: "Parâmetros ausentes." },
+        { status: 400 }
+      );
+    }
+
+    // Cria o cliente no Stripe
     const customer = await stripe.customers.create({
       email,
       metadata: { user_id },
     });
 
+    // Cria a assinatura com configuração para confirmação manual
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
       items: [{ price: price_id }],
       payment_behavior: "default_incomplete",
-      collection_method: "charge_automatically",
       payment_settings: {
-        payment_method_types: ['card'],
-        save_default_payment_method: 'on_subscription',
+        payment_method_types: ["card"],
+        save_default_payment_method: "on_subscription",
       },
-      expand: ["latest_invoice.payment_intent"],
+      expand: ["latest_invoice"], // evita erro ao expandir payment_intent diretamente
     });
 
-    const { error } = await supabase.from("subscriptions").insert([
-      {
-        user_id,
-        stripe_customer: customer.id,
-        stripe_subscription: subscription.id,
-        price_id,
-        status: subscription.status,
-      },
-    ]);
+    // Tenta acessar o payment_intent com segurança
+    const invoice = subscription.latest_invoice as Stripe.Invoice;
+    let clientSecret = null;
 
-    if (error) {
-      console.error("Erro ao salvar no Supabase:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (invoice?.payment_intent && typeof invoice.payment_intent !== "string") {
+      clientSecret = (invoice.payment_intent as Stripe.PaymentIntent).client_secret;
     }
 
-    const clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
-
-    if (!clientSecret) {
-      throw new Error("Stripe não retornou client_secret.");
-    }
-
+    // Retorna o clientSecret (pode ser null se ainda não gerado) e a ID da assinatura
     return NextResponse.json({
-      subscriptionId: subscription.id,
       clientSecret,
+      subscriptionId: subscription.id,
     });
-  } catch (err: any) {
-    console.error("Erro na subscription:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (error: any) {
+    console.error("❌ Erro ao criar assinatura:", error.message || error);
+    return NextResponse.json(
+      { error: "Erro interno ao criar assinatura." },
+      { status: 500 }
+    );
   }
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 
 export default function PlansAdminPage() {
-  const [productId, setProductId] = useState('')
+  const [name, setName] = useState('')
   const [amount, setAmount] = useState('')
   const [isAnnual, setIsAnnual] = useState(false)
   const [response, setResponse] = useState<string | null>(null)
@@ -30,12 +30,12 @@ export default function PlansAdminPage() {
     setError(null)
 
     try {
-      const res = await fetch('/api/stripe/create-or-get-price', {
+      const res = await fetch('/api/stripe/create-or-ensure-price', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          productId,
-          amount: Math.round(parseFloat(amount) * 100),
+          name,
+          price: parseFloat(amount),
           isAnnual,
         }),
       })
@@ -44,8 +44,8 @@ export default function PlansAdminPage() {
 
       if (!res.ok) throw new Error(data.error || 'Erro ao cadastrar plano')
 
-      setResponse(`✅ Preço cadastrado com sucesso: ${data.priceId}`)
-      setProductId('')
+      setResponse(`✅ Plano cadastrado com sucesso!`)
+      setName('')
       setAmount('')
       setIsAnnual(false)
       fetchPlans()
@@ -54,35 +54,16 @@ export default function PlansAdminPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este plano?')) return
-
-    try {
-      const res = await fetch(`/api/plans/delete/${id}`, {
-        method: 'DELETE',
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Erro ao excluir')
-      }
-
-      fetchPlans()
-    } catch (err: any) {
-      alert(err.message)
-    }
-  }
-
   return (
     <div className="max-w-3xl mx-auto mt-10 p-6 bg-white shadow rounded">
       <h1 className="text-2xl font-bold mb-4">Administração de Planos</h1>
       <form onSubmit={handleSubmit} className="space-y-4 mb-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700">ID do Produto (Stripe)</label>
+          <label className="block text-sm font-medium text-gray-700">Nome do Plano</label>
           <input
             type="text"
-            value={productId}
-            onChange={(e) => setProductId(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             className="mt-1 block w-full border border-gray-300 rounded px-3 py-2"
             required
           />
@@ -116,42 +97,6 @@ export default function PlansAdminPage() {
       </form>
       {response && <p className="text-green-600">{response}</p>}
       {error && <p className="text-red-600">{error}</p>}
-
-      <hr className="my-6" />
-      <h2 className="text-xl font-semibold mb-3">Planos Cadastrados</h2>
-      {plans.length === 0 ? (
-        <p className="text-gray-600">Nenhum plano cadastrado ainda.</p>
-      ) : (
-        <table className="w-full text-left border">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="p-2 border">Produto</th>
-              <th className="p-2 border">Preço (R$)</th>
-              <th className="p-2 border">Recorrência</th>
-              <th className="p-2 border">Criado em</th>
-              <th className="p-2 border">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {plans.map((plan) => (
-              <tr key={plan.id} className="border-t">
-                <td className="p-2 border">{plan.product_id}</td>
-                <td className="p-2 border">{Number(plan.amount).toFixed(2)}</td>
-                <td className="p-2 border">{plan.is_annual ? 'Anual' : 'Mensal'}</td>
-                <td className="p-2 border">{new Date(plan.created_at).toLocaleDateString()}</td>
-                <td className="p-2 border text-center">
-                  <button
-                    onClick={() => handleDelete(plan.id)}
-                    className="text-red-600 hover:underline text-sm"
-                  >
-                    Excluir
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
     </div>
   )
 }

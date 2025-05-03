@@ -34,8 +34,8 @@ export async function POST(req: Request) {
 
         const { error } = await supabase.from("plans").insert([
             {
-                stripe_product_id: productId,
-                stripe_price_id: newPrice.id,
+                product_id: productId,
+                price_id: newPrice.id,
                 amount: price,
                 is_annual: isAnnual,
             }
