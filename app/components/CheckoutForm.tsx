@@ -32,9 +32,13 @@ export function CheckoutForm({ clientSecret, subscriptionId }: Props) {
       confirmParams: {
         return_url: `${window.location.origin}/success?subscriptionId=${subscriptionId}`,
       },
+      redirect: "if_required",
     });
 
-    if (error) {
+    if (!error) {
+      window.location.href = `/success?subscriptionId=${subscriptionId}`;
+    } else {
+      console.error("Erro no pagamento:", error);
       setMessage(error.message ?? "Ocorreu um erro no pagamento.");
     }
 

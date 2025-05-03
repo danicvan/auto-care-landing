@@ -17,9 +17,10 @@ export default function CheckoutLoader() {
     const isAnnual = searchParams.get("isAnnual") === "true";
 
     if (!priceId) {
-      router.push("/");
+      setError("Parâmetro 'priceId' não encontrado.");
+      setTimeout(() => router.push("/"), 2000);
       return;
-    }
+    }    
 
     fetch("/api/stripe/create-subscription", {
       method: "POST",
