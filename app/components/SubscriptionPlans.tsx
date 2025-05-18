@@ -18,9 +18,9 @@ export default function SubscriptionPlans() {
         setPlans(res)
       })
       .catch((err) => {
-        console.error("❌ Erro ao buscar planos:", err)
-        setPlans([])
-      })
+        console.error("Failed to fetch plans:", err)
+        setPlans(null)
+      })      
       .finally(() => setLoading(false))
   }, [])  
 
@@ -52,6 +52,10 @@ export default function SubscriptionPlans() {
 
         {loading ? (
           <p className="text-center text-gray-600">Carregando planos...</p>
+        ) : plans === null ? (
+          <p className="text-center text-red-500">
+            Não foi possível carregar os planos. Tente novamente mais tarde.
+          </p>
         ) : filteredPlans.length === 0 ? (
           <p className="text-center text-gray-600">Nenhum plano encontrado.</p>
         ) : (
