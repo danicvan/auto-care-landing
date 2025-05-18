@@ -7,7 +7,7 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 export async function POST(req: NextRequest) {
   const sig = req.headers.get("stripe-signature");
 
-  const rawBody = await req.text(); // necessário para validar a assinatura
+  const rawBody = await req.text();
 
   let event;
 

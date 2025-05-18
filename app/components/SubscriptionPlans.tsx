@@ -3,38 +3,28 @@
 import { useEffect, useState } from "react"
 import { Fade } from "./animation"
 import { CheckoutButton } from "./CheckoutButton"
-
-interface Plan {
-  id: string
-  product_id: string
-  price_id: string
-  amount: number
-  is_annual: boolean
-  created_at: string
-}
+import { fetchPlans } from "@/lib/stripe/fetchPlans"
+import { Plan } from "@/types/plan"
 
 export default function SubscriptionPlans() {
   const [plans, setPlans] = useState<Plan[]>([])
   const [isAnnual, setIsAnnual] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  const fetchPlans = async () => {
-    try {
-      const res = await fetch("/api/plans/list")
-      const data = await res.json()
-      setPlans(data)
-    } catch (err) {
-      console.error("Erro ao buscar planos:", err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
     fetchPlans()
-  }, [])
+      .then((res) => {
+        console.log("✅ Planos recebidos:", res)
+        setPlans(res)
+      })
+      .catch((err) => {
+        console.error("❌ Erro ao buscar planos:", err)
+        setPlans([])
+      })
+      .finally(() => setLoading(false))
+  }, [])  
 
-  const filteredPlans = plans.filter((plan) => plan.is_annual === isAnnual)
+  const filteredPlans = plans.filter((plan) => Boolean(plan.is_annual) === isAnnual)
 
   const formatPrice = (price: number) =>
     price.toLocaleString("pt-BR", {
