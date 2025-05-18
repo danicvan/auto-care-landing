@@ -13,8 +13,13 @@ const PlanSchema = z.object({
 const PlansSchema = z.array(PlanSchema)
 
 export async function fetchPlans(): Promise<Plan[]> {
-  const res = await fetch("/api/plans/list")
-  const json = await res.json()
-
-  return PlansSchema.parse(json)
-}
+    const res = await fetch("/api/plans/list")
+  
+    if (!res.ok) {
+      const error = await res.json()
+      throw new Error(error?.message || "Failed to fetch plans.")
+    }
+  
+    const json = await res.json()
+    return PlansSchema.parse(json)
+  }  
