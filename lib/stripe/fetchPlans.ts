@@ -22,4 +22,4 @@ export async function fetchPlans(): Promise<Plan[]> {
   
     const json = await res.json()
     return PlansSchema.parse(json)
-  }  
+}  
