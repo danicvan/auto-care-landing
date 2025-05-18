@@ -16,7 +16,5 @@ export async function fetchPlans(): Promise<Plan[]> {
   const res = await fetch("/api/plans/list")
   const json = await res.json()
 
-  const raw = Array.isArray(json) ? json : json?.plans ?? []
-
-  return PlansSchema.parse(raw)
+  return PlansSchema.parse(json)
 }
