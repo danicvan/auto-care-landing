@@ -1,18 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-// Tipagem correta de context
-interface Context {
-  params: {
-    id: string;
-  };
-}
-
 export async function DELETE(
   req: NextRequest,
-  context: Context
+  { params }: { params: { id: string } }
 ) {
-  const id = context.params.id;
+  const { id } = params;
 
   const { error } = await supabase.from("plans").delete().eq("id", id);
 
