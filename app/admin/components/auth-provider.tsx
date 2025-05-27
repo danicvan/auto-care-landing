@@ -4,15 +4,14 @@ import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import AuthForm from "./auth-form"
 import PlansManager from "./plans-manager"
-import type { AuthChangeEvent } from "@/lib/types"
 
+// Usar tipagem implícita para evitar conflito com o build da Vercel
 export default function AuthProvider() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Verificar se o cliente Supabase está disponível
     if (!supabase) {
       setError("Erro ao conectar com o Supabase. Verifique as variáveis de ambiente.")
       setLoading(false)
@@ -33,15 +32,14 @@ export default function AuthProvider() {
 
     checkSession()
 
-    // Configurar listener para mudanças de autenticação
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
     })
 
     return () => {
-      if (subscription) subscription.unsubscribe()
+      subscription?.unsubscribe()
     }
   }, [])
 
