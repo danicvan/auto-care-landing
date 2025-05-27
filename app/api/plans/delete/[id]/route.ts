@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-// ✅ Correto para Next.js 15 App Router
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<NextResponse> {
-  const { id } = params;
+  { params }: { params: Record<string, string> }
+) {
+  const id = params.id;
 
   const { error } = await supabase.from("plans").delete().eq("id", id);
 
