@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import type { RouteHandlerContext } from "next/dist/server/future/route-modules/app-route/module";
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Record<string, string> }
+  context: RouteHandlerContext
 ) {
-  const id = params.id;
+  const id = context.params.id;
 
   const { error } = await supabase.from("plans").delete().eq("id", id);
 
