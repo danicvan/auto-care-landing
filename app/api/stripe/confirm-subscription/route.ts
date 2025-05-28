@@ -1,6 +1,6 @@
 import { stripe } from "@/lib/stripe";
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+import type StripeType from "stripe"; // tipo explícito
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   try {
     const subscription = await stripe.subscriptions.retrieve(
       subscriptionId
-    ) as Stripe.Subscription;
+    ) as StripeType.Subscription; // cast explícito para o tipo certo
 
     return NextResponse.json({
       status: subscription.status,
