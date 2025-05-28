@@ -13,15 +13,17 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const subscription = (await stripe.subscriptions.retrieve(subscriptionId, {
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
       expand: ["customer", "items.data.price.product"],
-    })) as Stripe.Subscription;
+    });
 
     const item = subscription.items.data[0];
     const plan = item.price.nickname || item.price.id;
     const priceId = item.price.id;
     const stripeCustomerId = subscription.customer as string;
-    const unixEnd = subscription.current_period_end; // ✅ AGORA FUNCIONA
+
+    // 👇 Aqui usamos força bruta segura
+    const unixEnd = (subscription as any).current_period_end;
 
     const email =
       typeof subscription.customer === "object" && "email" in subscription.customer
