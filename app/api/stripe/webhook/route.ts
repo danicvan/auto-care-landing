@@ -15,13 +15,21 @@ export async function POST(req: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(rawBody, sig!, endpointSecret);
   } catch (err: any) {
-    console.error("❌ Erro ao validar webhook:", err.message);
-    return NextResponse.json({ error: "Webhook inválido" }, { status: 400 });
+    console.error("❌ Error validating webhook:", err.message);
+    return NextResponse.json({ error: "Invalid webhook" }, { status: 400 });
   }
 
   if (event.type === "invoice.payment_succeeded") {
     const invoice = event.data.object as Stripe.Invoice;
-    const subscriptionId = invoice.subscription as string;
+
+    const subscriptionId = typeof invoice.subscription === "string"
+      ? invoice.subscription
+      : invoice.subscription?.toString(); // fallback defensivo
+
+    if (!subscriptionId) {
+      console.warn("⚠️ Subscription ID not found in invoice.");
+      return NextResponse.json({ warning: "No subscription ID" });
+    }
 
     try {
       const subscription: Stripe.Subscription = await stripe.subscriptions.retrieve(subscriptionId, {
@@ -31,15 +39,13 @@ export async function POST(req: NextRequest) {
       const item = subscription.items.data[0];
       const plan = item.price.nickname || item.price.id;
       const priceId = item.price.id;
-      const stripeCustomerId = subscription.customer as string;
       const current_period_end = subscription.current_period_end;
 
       const email =
         typeof subscription.customer === "object" && "email" in subscription.customer
           ? subscription.customer.email
-          : subscription.customer_email || "desconhecido";
+          : subscription.customer_email || "unknown";
 
-      // Atualizar no Supabase
       const { error: dbError } = await supabase
         .from("subscriptions")
         .update({
@@ -51,12 +57,12 @@ export async function POST(req: NextRequest) {
         .eq("subscription_id", subscription.id);
 
       if (dbError) {
-        console.error("❌ Erro ao atualizar Supabase:", dbError);
+        console.error("❌ Error updating Supabase:", dbError);
+      } else {
+        console.log("✅ Subscription updated successfully in Supabase.");
       }
-
-      console.log("✅ Assinatura atualizada com sucesso no Supabase.");
     } catch (error: any) {
-      console.error("❌ Erro ao buscar assinatura no Stripe:", error.message);
+      console.error("❌ Error retrieving subscription from Stripe:", error.message);
     }
   }
 
