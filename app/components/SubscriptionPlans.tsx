@@ -19,7 +19,7 @@ export default function SubscriptionPlans() {
       })
       .catch((err) => {
         console.error("Failed to fetch plans:", err)
-        setPlans(null)
+        setPlans([])
       })      
       .finally(() => setLoading(false))
   }, [])  
