@@ -22,7 +22,6 @@ export async function GET(req: NextRequest) {
     const priceId = item.price.id;
     const stripeCustomerId = subscription.customer as string;
 
-    // 👇 Aqui usamos força bruta segura
     const unixEnd = (subscription as any).current_period_end;
 
     const email =
