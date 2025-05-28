@@ -35,9 +35,9 @@ export async function POST(req: NextRequest) {
       const current_period_end = (subscription as any).current_period_end;
 
       const email =
-        typeof subscription.customer === "object" && "email" in subscription.customer
-          ? subscription.customer.email
-          : subscription.customer_email || "unknown";
+      typeof subscription.customer === "object" && "email" in subscription.customer
+        ? subscription.customer.email
+        : "unknown";
 
       const { error: dbError } = await supabase
         .from("subscriptions")
