@@ -1,6 +1,7 @@
 import { stripe } from "@/lib/stripe";
 import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
@@ -19,7 +20,13 @@ export async function POST(req: NextRequest) {
   }
 
   if (event.type === "invoice.payment_succeeded") {
-    const invoice = event.data.object;
+    const invoice = event.data.object as Stripe.Invoice;
+
+    if (!invoice.subscription || typeof invoice.subscription !== "string") {
+      console.error("❌ Subscription ID ausente ou inválido.");
+      return NextResponse.json({ error: "Subscription ID ausente." }, { status: 400 });
+    }
+
     const subscriptionId = invoice.subscription;
 
     try {
