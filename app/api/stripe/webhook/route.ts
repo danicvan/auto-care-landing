@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       const item = subscription.items.data[0];
       const plan = item.price.nickname || item.price.id;
       const priceId = item.price.id;
-      const current_period_end = subscription.current_period_end;
+      const current_period_end = (subscription as any).current_period_end;
 
       const email =
         typeof subscription.customer === "object" && "email" in subscription.customer
