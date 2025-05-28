@@ -2,7 +2,7 @@ import { stripe } from "@/lib/stripe";
 import { supabase } from "@/lib/supabase";
 import { resend } from "@/lib/resend";
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe"; // ✅ IMPORTAÇÃO
+import Stripe from "stripe";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -15,15 +15,13 @@ export async function GET(req: NextRequest) {
   try {
     const subscription = (await stripe.subscriptions.retrieve(subscriptionId, {
       expand: ["customer", "items.data.price.product"],
-    })) as Stripe.Subscription; // ✅ CAST
+    })) as Stripe.Subscription;
 
     const item = subscription.items.data[0];
     const plan = item.price.nickname || item.price.id;
     const priceId = item.price.id;
     const stripeCustomerId = subscription.customer as string;
-
-    // ✅ Alternativa de acesso segura
-    const unixEnd = Number(subscription["current_period_end"]);
+    const unixEnd = subscription.current_period_end; // ✅ AGORA FUNCIONA
 
     const email =
       typeof subscription.customer === "object" && "email" in subscription.customer
