@@ -1,4 +1,5 @@
 import { stripe } from "@/lib/stripe";
+import Stripe from "stripe";
 import { supabase } from "@/lib/supabase";
 import { resend } from "@/lib/resend";
 import { NextRequest, NextResponse } from "next/server";
