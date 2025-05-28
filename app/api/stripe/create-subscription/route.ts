@@ -39,6 +39,18 @@ export async function POST(req: Request) {
     });
 
     const invoice = subscription.latest_invoice as Stripe.Invoice;
+
+    if (
+      typeof invoice !== "object" ||
+      !("payment_intent" in invoice) ||
+      invoice.payment_intent === null
+    ) {
+      return NextResponse.json(
+        { error: "payment_intent não encontrado na fatura." },
+        { status: 500 }
+      );
+    }
+
     const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
 
     if (!paymentIntent?.client_secret) {
