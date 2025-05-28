@@ -1,5 +1,6 @@
 import { stripe } from "@/lib/stripe";
 import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -10,16 +11,23 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const subscription = await stripe.subscriptions.retrieve(
+      subscriptionId
+    ) as Stripe.Subscription;
 
     return NextResponse.json({
       status: subscription.status,
       current_period_end: subscription.current_period_end,
-      plan: subscription.items.data[0].price.nickname || subscription.items.data[0].price.id,
-      return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?subscriptionId=${subscriptionId}`
+      plan:
+        subscription.items.data[0].price.nickname ||
+        subscription.items.data[0].price.id,
+      return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?subscriptionId=${subscriptionId}`,
     });
   } catch (err: any) {
     console.error("Erro ao buscar assinatura:", err);
-    return NextResponse.json({ error: "Erro ao consultar assinatura" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erro ao consultar assinatura" },
+      { status: 500 }
+    );
   }
 }
