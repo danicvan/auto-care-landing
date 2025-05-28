@@ -26,9 +26,9 @@ export async function GET(req: NextRequest) {
     const unixEnd = (subscription as any).current_period_end;
 
     const email =
-      typeof subscription.customer === "object" && "email" in subscription.customer
-        ? subscription.customer.email
-        : subscription.customer_email || "desconhecido";
+      typeof subscription.customer === "object" && subscription.customer && "email" in subscription.customer
+        ? (subscription.customer as Stripe.Customer).email ?? "desconhecido"
+        : "desconhecido";
 
     await supabase.from("subscriptions").insert([
       {
