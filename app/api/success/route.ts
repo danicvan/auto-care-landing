@@ -2,7 +2,7 @@ import { stripe } from "@/lib/stripe";
 import { supabase } from "@/lib/supabase";
 import { resend } from "@/lib/resend";
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+import Stripe from "stripe"; // ✅ IMPORTAÇÃO
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -15,21 +15,22 @@ export async function GET(req: NextRequest) {
   try {
     const subscription = (await stripe.subscriptions.retrieve(subscriptionId, {
       expand: ["customer", "items.data.price.product"],
-    })) as Stripe.Subscription;      
+    })) as Stripe.Subscription; // ✅ CAST
 
     const item = subscription.items.data[0];
     const plan = item.price.nickname || item.price.id;
     const priceId = item.price.id;
     const stripeCustomerId = subscription.customer as string;
-    const unixEnd = Number(subscription.current_period_end);
+
+    // ✅ Alternativa de acesso segura
+    const unixEnd = Number(subscription["current_period_end"]);
 
     const email =
       typeof subscription.customer === "object" && "email" in subscription.customer
         ? subscription.customer.email
         : subscription.customer_email || "desconhecido";
 
-    // 🔄 Save to Supabase
-    const { error: dbError } = await supabase.from("subscriptions").insert([
+    await supabase.from("subscriptions").insert([
       {
         subscription_id: subscription.id,
         stripe_customer: stripeCustomerId,
@@ -41,37 +42,12 @@ export async function GET(req: NextRequest) {
       },
     ]);
 
-    if (dbError) {
-      console.error("❌ Supabase insert error:", dbError);
-    }
-
-    // ✉️ Send confirmation email
-    const formattedDate =
-      isNaN(unixEnd) || unixEnd <= 0
-        ? "Desconhecida"
-        : new Date(unixEnd * 1000).toLocaleDateString("pt-BR");
-
-    const { error: emailError } = await resend.emails.send({
+    await resend.emails.send({
       from: "danicvan@hotmail.com",
       to: email,
       subject: "Confirmação da sua assinatura",
-      html: `
-        <div style="font-family: sans-serif; padding: 24px; max-width: 600px; margin: auto;">
-          <h2 style="color: #10b981;">Assinatura Confirmada ✅</h2>
-          <p>Olá!</p>
-          <p>Sua assinatura foi concluída com sucesso.</p>
-          <p><strong>Plano:</strong> ${plan}</p>
-          <p><strong>Status:</strong> ${subscription.status}</p>
-          <p><strong>Renovação em:</strong> ${formattedDate}</p>
-          <br />
-          <p style="font-size: 12px; color: #777;">Obrigado por escolher a AutoCare.</p>
-        </div>
-      `,
+      html: `<p>Plano: ${plan}, Status: ${subscription.status}, Fim: ${new Date(unixEnd * 1000).toLocaleDateString("pt-BR")}</p>`,
     });
-
-    if (emailError) {
-      console.error("❌ Email sending error:", emailError);
-    }
 
     return NextResponse.json({
       status: subscription.status,
@@ -80,7 +56,7 @@ export async function GET(req: NextRequest) {
       return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?subscriptionId=${subscriptionId}`,
     });
   } catch (err: any) {
-    console.error("❌ Subscription fetch error:", err);
+    console.error("Erro ao buscar assinatura:", err);
     return NextResponse.json({ error: "Erro ao consultar assinatura" }, { status: 500 });
   }
 }
