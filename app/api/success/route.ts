@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const email =
       typeof subscription.customer === "object" && "email" in subscription.customer
         ? subscription.customer.email
-        : subscription.customer_email || "desconhecido";
+        : "desconhecido";
 
     // 🔄 Salvar no Supabase
     const { error: dbError } = await supabase.from("subscriptions").insert([
