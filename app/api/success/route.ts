@@ -1,8 +1,8 @@
 import { stripe } from "@/lib/stripe";
-import Stripe from "stripe";
 import { supabase } from "@/lib/supabase";
 import { resend } from "@/lib/resend";
 import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe"; // ✅ Tipo importado
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   try {
     const subscription = (await stripe.subscriptions.retrieve(subscriptionId, {
       expand: ["customer", "items.data.price.product"],
-    })) as Stripe.Subscription;    
+    })) as Stripe.Subscription;
 
     const item = subscription.items.data[0];
     const plan = item.price.nickname || item.price.id;
@@ -26,9 +26,9 @@ export async function GET(req: NextRequest) {
     const email =
       typeof subscription.customer === "object" && "email" in subscription.customer
         ? subscription.customer.email
-        : "desconhecido";
+        : subscription.customer_email || "desconhecido";
 
-    // 🔄 Salvar no Supabase
+    // 🔄 Save to Supabase
     const { error: dbError } = await supabase.from("subscriptions").insert([
       {
         subscription_id: subscription.id,
@@ -42,17 +42,17 @@ export async function GET(req: NextRequest) {
     ]);
 
     if (dbError) {
-      console.error("❌ Erro ao salvar no Supabase:", dbError);
+      console.error("❌ Supabase insert error:", dbError);
     }
 
-    // ✉️ Enviar e-mail de confirmação
+    // ✉️ Send confirmation email
     const formattedDate =
       isNaN(unixEnd) || unixEnd <= 0
         ? "Desconhecida"
         : new Date(unixEnd * 1000).toLocaleDateString("pt-BR");
 
     const { error: emailError } = await resend.emails.send({
-      from: "danicvan@hotmail.com", // ❗️Use domínio verificado aqui
+      from: "danicvan@hotmail.com",
       to: email,
       subject: "Confirmação da sua assinatura",
       html: `
@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (emailError) {
-      console.error("❌ Erro ao enviar e-mail:", emailError);
+      console.error("❌ Email sending error:", emailError);
     }
 
     return NextResponse.json({
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
       return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?subscriptionId=${subscriptionId}`,
     });
   } catch (err: any) {
-    console.error("❌ Erro ao buscar assinatura:", err);
+    console.error("❌ Subscription fetch error:", err);
     return NextResponse.json({ error: "Erro ao consultar assinatura" }, { status: 500 });
   }
 }
