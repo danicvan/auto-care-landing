@@ -2,7 +2,7 @@ import { stripe } from "@/lib/stripe";
 import { supabase } from "@/lib/supabase";
 import { resend } from "@/lib/resend";
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe"; // ✅ Tipo importado
+import type Stripe from "stripe";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   try {
     const subscription = (await stripe.subscriptions.retrieve(subscriptionId, {
       expand: ["customer", "items.data.price.product"],
-    })) as Stripe.Subscription;
+    })) as Stripe.Subscription;    
 
     const item = subscription.items.data[0];
     const plan = item.price.nickname || item.price.id;
