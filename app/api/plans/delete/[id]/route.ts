@@ -3,9 +3,9 @@ import { supabase } from "@/lib/supabase"
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Record<string, string> }
 ) {
-  const id = params.id
+  const id = context.params.id
 
   const { error } = await supabase.from("plans").delete().eq("id", id)
 
