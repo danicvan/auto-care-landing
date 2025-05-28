@@ -21,16 +21,9 @@ export async function POST(req: NextRequest) {
 
   if (event.type === "invoice.payment_succeeded") {
     const invoice = event.data.object as Stripe.Invoice;
-
-    const subscriptionId = typeof invoice.subscription === "string"
-      ? invoice.subscription
-      : invoice.subscription?.toString(); // fallback defensivo
-
-    if (!subscriptionId) {
-      console.warn("⚠️ Subscription ID not found in invoice.");
-      return NextResponse.json({ warning: "No subscription ID" });
-    }
-
+  
+    const subscriptionId = (invoice as any).subscription as string;
+  
     try {
       const subscription: Stripe.Subscription = await stripe.subscriptions.retrieve(subscriptionId, {
         expand: ["customer", "items.data.price.product"],
