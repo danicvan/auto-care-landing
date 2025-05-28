@@ -12,9 +12,9 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
+    const subscription = (await stripe.subscriptions.retrieve(subscriptionId, {
       expand: ["customer", "items.data.price.product"],
-    });
+    })) as Stripe.Subscription;    
 
     const item = subscription.items.data[0];
     const plan = item.price.nickname || item.price.id;
