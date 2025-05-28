@@ -20,8 +20,10 @@ export async function POST(req: NextRequest) {
   if (event.type === "invoice.payment_succeeded") {
     const invoice = event.data.object as Stripe.Invoice;
 
-    // 🔐 Acesso seguro: o TypeScript não garante que subscription exista
-    const subscriptionId = typeof invoice.subscription === "string" ? invoice.subscription : null;
+    const subscriptionId =
+      "subscription" in invoice && typeof invoice.subscription === "string"
+        ? invoice.subscription
+        : null;
 
     if (!subscriptionId) {
       console.error("❌ Subscription ID ausente ou inválido.");
