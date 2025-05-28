@@ -1,13 +1,15 @@
 import { stripe } from "@/lib/stripe";
 import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+import type Stripe from "stripe";
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(req: NextRequest) {
   const sig = req.headers.get("stripe-signature");
+
   const rawBody = await req.text();
+
   let event: Stripe.Event;
 
   try {
@@ -19,25 +21,17 @@ export async function POST(req: NextRequest) {
 
   if (event.type === "invoice.payment_succeeded") {
     const invoice = event.data.object as Stripe.Invoice;
-
-    const subscriptionId =
-      "subscription" in invoice && typeof invoice.subscription === "string"
-        ? invoice.subscription
-        : null;
-
-    if (!subscriptionId) {
-      console.error("❌ Subscription ID ausente ou inválido.");
-      return NextResponse.json({ error: "Subscription ID ausente." }, { status: 400 });
-    }
+    const subscriptionId = invoice.subscription as string;
 
     try {
-      const subscription = (await stripe.subscriptions.retrieve(subscriptionId, {
+      const subscription: Stripe.Subscription = await stripe.subscriptions.retrieve(subscriptionId, {
         expand: ["customer", "items.data.price.product"],
-      })) as Stripe.Subscription;
+      });
 
       const item = subscription.items.data[0];
       const plan = item.price.nickname || item.price.id;
       const priceId = item.price.id;
+      const stripeCustomerId = subscription.customer as string;
       const current_period_end = subscription.current_period_end;
 
       const email =
@@ -45,6 +39,7 @@ export async function POST(req: NextRequest) {
           ? subscription.customer.email
           : subscription.customer_email || "desconhecido";
 
+      // Atualizar no Supabase
       const { error: dbError } = await supabase
         .from("subscriptions")
         .update({
