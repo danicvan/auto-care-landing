@@ -15,7 +15,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔎 Verificar se cliente já existe (opcional, mas recomendável se seu sistema persistir cliente_id)
     const customers = await stripe.customers.list({ email, limit: 1 });
     const existingCustomer = customers.data[0];
 
@@ -26,7 +25,6 @@ export async function POST(req: Request) {
           metadata: { user_id },
         });
 
-    // 📦 Cria a assinatura com pagamento manual
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
       items: [{ price: price_id }],
@@ -35,27 +33,23 @@ export async function POST(req: Request) {
         payment_method_types: ["card"],
         save_default_payment_method: "on_subscription",
       },
-      expand: ["latest_invoice.payment_intent"], // << já expande direto o paymentIntent
+      expand: ["latest_invoice"]
     });
 
     const invoice = subscription.latest_invoice as Stripe.Invoice;
 
-    if (
-      typeof invoice !== "object" ||
-      !("payment_intent" in invoice) ||
-      invoice.payment_intent === null
-    ) {
+    if (!invoice || typeof invoice !== "object") {
       return NextResponse.json(
-        { error: "payment_intent não encontrado na fatura." },
+        { error: "Fatura inválida ou ausente." },
         { status: 500 }
       );
     }
 
     const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
 
-    if (!paymentIntent?.client_secret) {
+    if (!paymentIntent || !paymentIntent.client_secret) {
       return NextResponse.json(
-        { error: "client_secret não gerado." },
+        { error: "payment_intent.client_secret não disponível." },
         { status: 500 }
       );
     }
