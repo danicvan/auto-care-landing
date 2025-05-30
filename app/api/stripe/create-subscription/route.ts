@@ -36,23 +36,18 @@ export async function POST(req: Request) {
       expand: ["latest_invoice"]
     });
 
-    const invoice = subscription.latest_invoice as Stripe.Invoice;
-
-    if (!invoice || typeof invoice !== "object") {
+    const invoice = subscription.latest_invoice as Stripe.Invoice & {
+      payment_intent?: Stripe.PaymentIntent;
+    };
+    
+    const paymentIntent = invoice.payment_intent;
+    
+    if (!paymentIntent?.client_secret) {
       return NextResponse.json(
-        { error: "Fatura inválida ou ausente." },
+        { error: "client_secret não gerado." },
         { status: 500 }
       );
-    }
-
-    const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
-
-    if (!paymentIntent || !paymentIntent.client_secret) {
-      return NextResponse.json(
-        { error: "payment_intent.client_secret não disponível." },
-        { status: 500 }
-      );
-    }
+    }    
 
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
