@@ -16,11 +16,13 @@ export default function CheckoutLoader() {
     const priceId = searchParams.get("priceId");
     const isAnnual = searchParams.get("isAnnual") === "true";
 
-    if (!priceId) {
-      setError("Parâmetro 'priceId' não encontrado.");
+    if (!priceId || typeof priceId !== 'string') {
+      setError("Parâmetro 'priceId' inválido.");
       setTimeout(() => router.push("/"), 2000);
       return;
     }    
+
+    console.log(priceId);
 
     fetch("/api/stripe/create-subscription", {
       method: "POST",

@@ -6,14 +6,17 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    console.log("📥 Body recebido:", body);
+
     const { email, price_id, user_id } = body;
 
     if (!email || !price_id || !user_id) {
+      console.error("❌ Parâmetros ausentes:", { email, price_id, user_id });
       return NextResponse.json(
         { error: "Parâmetros ausentes." },
         { status: 400 }
       );
-    }
+    }    
 
     const customers = await stripe.customers.list({ email, limit: 1 });
     const existingCustomer = customers.data[0];
