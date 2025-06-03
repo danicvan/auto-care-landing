@@ -45,18 +45,25 @@ export async function POST(req: Request) {
       expand: ["latest_invoice"]
     });
 
+    console.log("🔍 Subscription criada:", subscription);
+
     const invoice = subscription.latest_invoice as Stripe.Invoice & {
       payment_intent?: Stripe.PaymentIntent;
     };
+
+    console.log("🧾 Invoice:", invoice);
     
     const paymentIntent = invoice.payment_intent;
     
     if (!paymentIntent?.client_secret) {
+      console.error("❌ client_secret não encontrado. paymentIntent:", paymentIntent);
       return NextResponse.json(
-        { error: "client_secret não gerado." },
+        { error: "client_secret não gerado. Verifique se o price_id exige pagamento." },
         { status: 500 }
       );
-    }    
+    }       
+
+    console.log("💳 PaymentIntent:", paymentIntent);
 
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
