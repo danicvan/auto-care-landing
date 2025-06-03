@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import CheckoutClient from "./CheckoutClient";
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs'
 
 export default function CheckoutLoader() {
   const searchParams = useSearchParams();
