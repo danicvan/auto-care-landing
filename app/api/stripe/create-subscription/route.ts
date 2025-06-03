@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+console.log("🔐 Chave Stripe carregada:", process.env.STRIPE_SECRET_KEY);
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(req: Request) {
@@ -26,6 +27,11 @@ export async function POST(req: Request) {
       : await stripe.customers.create({
           email,
           metadata: { user_id },
+        });
+
+        console.log("📦 Criando assinatura para:", {
+          customer_id: customer.id,
+          price_id,
         });
 
     const subscription = await stripe.subscriptions.create({
