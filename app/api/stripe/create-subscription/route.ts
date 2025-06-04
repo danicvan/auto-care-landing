@@ -66,12 +66,12 @@ export async function POST(req: Request) {
     const paymentIntent = invoice.payment_intent;
     
     if (!paymentIntent?.client_secret) {
-      console.error("❌ client_secret não encontrado. paymentIntent:", paymentIntent);
+      console.error("❌ No client_secret. Subscription may not require immediate payment.", paymentIntent);
       return NextResponse.json(
-        { error: "client_secret não gerado. Verifique se o price_id exige pagamento." },
+        { error: "No client_secret found. This subscription may not require payment." },
         { status: 500 }
       );
-    }       
+    }         
 
     console.log("💳 PaymentIntent:", paymentIntent);
 
