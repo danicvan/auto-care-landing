@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-console.log("🔐 Chave Stripe carregada:", process.env.STRIPE_SECRET_KEY);
+console.log("🔐 Stripe key loaded:", process.env.STRIPE_SECRET_KEY);
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(req: Request) {
@@ -18,24 +18,28 @@ export async function POST(req: Request) {
       user_id: string;
     } = await req.json();
 
-    debug("📥 Body recebido:", requestData);
+    debug("📥 Request body received:", requestData);
 
     const { email, price_id, user_id } = requestData;
 
     if (!email || !price_id || !user_id) {
-      console.error("❌ Parâmetros ausentes:", { email, price_id, user_id });
+      console.error("❌ Missing parameters:", { email, price_id, user_id });
       return NextResponse.json(
-        { error: "Parâmetros ausentes." },
+        { error: "Missing parameters." },
         { status: 400 }
       );
     }
 
     async function getOrCreateCustomer(email: string, user_id: string) {
       const customers = await stripe.customers.list({ email, limit: 1 });
-      return customers.data[0] ?? await stripe.customers.create({
-        email,
-        metadata: { user_id },
-      });
+      const customer =
+        customers.data[0] ??
+        (await stripe.customers.create({
+          email,
+          metadata: { user_id },
+        }));
+      debug("👤 Customer ready:", customer);
+      return customer;
     }
 
     const customer = await getOrCreateCustomer(email, user_id);
@@ -47,18 +51,26 @@ export async function POST(req: Request) {
       payment_settings: {
         payment_method_types: ["card"],
         save_default_payment_method: "on_subscription",
-      }
+      },
     });
 
-    debug("🔍 Subscription criada:", subscription);
+    debug("📦 Subscription created:", {
+      id: subscription.id,
+      status: subscription.status,
+      latest_invoice: subscription.latest_invoice,
+    });
 
-    // Buscar invoice manualmente com expand
     const invoiceId = subscription.latest_invoice as string;
+
     const invoice = await stripe.invoices.retrieve(invoiceId, {
       expand: ["payment_intent"],
     });
 
-    debug("🧾 Invoice (manual):", structuredClone(invoice));
+    debug("🧾 Invoice retrieved:", {
+      id: invoice.id,
+      status: invoice.status,
+      payment_intent_type: typeof invoice.payment_intent,
+    });
 
     const paymentIntent = invoice.payment_intent;
 
@@ -67,22 +79,30 @@ export async function POST(req: Request) {
       typeof paymentIntent === "string" ||
       !("client_secret" in paymentIntent)
     ) {
-      console.error("❌ No client_secret. Subscription may not require immediate payment.", paymentIntent);
+      console.error(
+        "❌ No client_secret. Subscription may not require immediate payment.",
+        paymentIntent
+      );
       return NextResponse.json(
         { error: "No client_secret found. This subscription may not require payment." },
         { status: 500 }
       );
     }
 
+    debug("💳 PaymentIntent OK:", {
+      id: paymentIntent.id,
+      status: paymentIntent.status,
+      client_secret: paymentIntent.client_secret,
+    });
+
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       subscriptionId: subscription.id,
     });
-
   } catch (error: any) {
-    console.error("❌ Erro ao criar assinatura:", error);
+    console.error("❌ Error creating subscription:", error);
     return NextResponse.json(
-      { error: "Erro interno ao criar assinatura." },
+      { error: "Internal error creating subscription." },
       { status: 500 }
     );
   }
