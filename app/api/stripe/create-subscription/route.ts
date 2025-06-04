@@ -47,8 +47,7 @@ export async function POST(req: Request) {
       payment_settings: {
         payment_method_types: ["card"],
         save_default_payment_method: "on_subscription",
-      },
-      auto_advance: true // ainda necessário
+      }
     });
 
     debug("🔍 Subscription criada:", subscription);
