@@ -6,7 +6,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(req: Request) {
   try {
-    const requestData = await req.json();
+    const requestData: {
+      email: string;
+      price_id: string;
+      user_id: string;
+    } = await req.json();
+    
     console.log("📥 Body recebido:", requestData);
 
     const { email, price_id, user_id } = requestData;
