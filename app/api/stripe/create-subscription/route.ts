@@ -5,6 +5,13 @@ console.log("🔐 Chave Stripe carregada:", process.env.STRIPE_SECRET_KEY);
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(req: Request) {
+
+  function debug(label: string, data: any) {
+    if (process.env.NODE_ENV !== "production") {
+      console.log(label, data);
+    }
+  }
+  
   try {
     const requestData: {
       email: string;
