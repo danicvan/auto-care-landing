@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       payment_intent?: Stripe.PaymentIntent;
     };
 
-    console.log("🧾 Invoice:", invoice);
+    debug("🧾 Invoice:", structuredClone(invoice));
     
     const paymentIntent = invoice.payment_intent;
     
