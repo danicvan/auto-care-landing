@@ -63,15 +63,17 @@ export async function POST(req: Request) {
 
     const paymentIntent = invoice.payment_intent;
 
-    if (!paymentIntent?.client_secret) {
+    if (
+      !paymentIntent ||
+      typeof paymentIntent === "string" ||
+      !("client_secret" in paymentIntent)
+    ) {
       console.error("❌ No client_secret. Subscription may not require immediate payment.", paymentIntent);
       return NextResponse.json(
         { error: "No client_secret found. This subscription may not require payment." },
         { status: 500 }
       );
     }
-
-    debug("💳 PaymentIntent:", paymentIntent);
 
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
