@@ -5,21 +5,20 @@ console.log("🔐 Chave Stripe carregada:", process.env.STRIPE_SECRET_KEY);
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(req: Request) {
-
   function debug(label: string, data: any) {
     if (process.env.NODE_ENV !== "production") {
       console.log(label, data);
     }
   }
-  
+
   try {
     const requestData: {
       email: string;
       price_id: string;
       user_id: string;
     } = await req.json();
-    
-    console.log("📥 Body recebido:", requestData);
+
+    debug("📥 Body recebido:", requestData);
 
     const { email, price_id, user_id } = requestData;
 
@@ -29,10 +28,7 @@ export async function POST(req: Request) {
         { error: "Parâmetros ausentes." },
         { status: 400 }
       );
-    }    
-
-    const customers = await stripe.customers.list({ email, limit: 1 });
-    const existingCustomer = customers.data[0];
+    }
 
     async function getOrCreateCustomer(email: string, user_id: string) {
       const customers = await stripe.customers.list({ email, limit: 1 });
@@ -52,33 +48,36 @@ export async function POST(req: Request) {
         payment_method_types: ["card"],
         save_default_payment_method: "on_subscription",
       },
-      expand: ["latest_invoice"]
+      auto_advance: true // ainda necessário
     });
 
-    console.log("🔍 Subscription criada:", subscription);
+    debug("🔍 Subscription criada:", subscription);
 
-    const invoice = subscription.latest_invoice as Stripe.Invoice & {
-      payment_intent?: Stripe.PaymentIntent;
-    };
+    // Buscar invoice manualmente com expand
+    const invoiceId = subscription.latest_invoice as string;
+    const invoice = await stripe.invoices.retrieve(invoiceId, {
+      expand: ["payment_intent"],
+    });
 
-    debug("🧾 Invoice:", structuredClone(invoice));
-    
+    debug("🧾 Invoice (manual):", structuredClone(invoice));
+
     const paymentIntent = invoice.payment_intent;
-    
+
     if (!paymentIntent?.client_secret) {
       console.error("❌ No client_secret. Subscription may not require immediate payment.", paymentIntent);
       return NextResponse.json(
         { error: "No client_secret found. This subscription may not require payment." },
         { status: 500 }
       );
-    }         
+    }
 
-    console.log("💳 PaymentIntent:", paymentIntent);
+    debug("💳 PaymentIntent:", paymentIntent);
 
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       subscriptionId: subscription.id,
     });
+
   } catch (error: any) {
     console.error("❌ Erro ao criar assinatura:", error);
     return NextResponse.json(
