@@ -27,17 +27,15 @@ export async function POST(req: Request) {
     const customers = await stripe.customers.list({ email, limit: 1 });
     const existingCustomer = customers.data[0];
 
-    const customer = existingCustomer
-      ? existingCustomer
-      : await stripe.customers.create({
-          email,
-          metadata: { user_id },
-        });
+    async function getOrCreateCustomer(email: string, user_id: string) {
+      const customers = await stripe.customers.list({ email, limit: 1 });
+      return customers.data[0] ?? await stripe.customers.create({
+        email,
+        metadata: { user_id },
+      });
+    }
 
-        console.log("📦 Criando assinatura para:", {
-          customer_id: customer.id,
-          price_id,
-        });
+    const customer = await getOrCreateCustomer(email, user_id);
 
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
