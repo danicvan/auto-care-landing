@@ -6,10 +6,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    console.log("📥 Body recebido:", body);
+    const requestData = await req.json();
+    console.log("📥 Body recebido:", requestData);
 
-    const { email, price_id, user_id } = body;
+    const { email, price_id, user_id } = requestData;
 
     if (!email || !price_id || !user_id) {
       console.error("❌ Parâmetros ausentes:", { email, price_id, user_id });
