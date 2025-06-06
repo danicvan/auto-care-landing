@@ -12,54 +12,68 @@ export default function CheckoutLoader() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const supabase = createPagesBrowserClient();
 
   useEffect(() => {
-    const priceId = searchParams.get("priceId");
-    const isAnnual = searchParams.get("isAnnual") === "true";
+    const loadCheckout = async () => {
+      setLoading(true);
 
-    if (!priceId || typeof priceId !== "string") {
-      setError("Parâmetro 'priceId' inválido.");
-      setTimeout(() => router.push("/"), 2000);
-      return;
-    }
+      const priceId = searchParams.get("priceId");
+      const isAnnual = searchParams.get("isAnnual") === "true";
 
-    const supabase = createPagesBrowserClient();
-
-    supabase.auth.getUser().then(({ data: { user }, error: supabaseError }) => {
-      if (supabaseError || !user?.email) {
-        console.error("❌ Erro ao obter usuário:", supabaseError || "Sem e-mail");
-        setError("Erro ao autenticar usuário.");
+      if (!priceId || typeof priceId !== "string") {
+        setError("Parâmetro 'priceId' inválido.");
+        setTimeout(() => router.push("/"), 2000);
         return;
       }
 
-      fetch("/api/stripe/create-subscription", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: user.id,
-          email: user.email,
-          price_id: priceId,
-        }),
-      })
-        .then(async (res) => {
-          const data = await res.json();
+      try {
+        const { data: { user }, error: supabaseError } = await supabase.auth.getUser();
 
-          if (!res.ok || !data.clientSecret) {
-            throw new Error(data.error || "Falha ao criar assinatura");
-          }
+        if (supabaseError || !user?.email) {
+          console.error("❌ Erro ao obter usuário:", supabaseError || "Sem e-mail");
+          setError("Erro ao autenticar usuário.");
+          return;
+        }
 
-          setClientSecret(data.clientSecret);
-          setSubscriptionId(data.subscriptionId);
-        })
-        .catch((err) => {
-          console.error("❌ Erro no fetch:", err.message);
-          setError("Erro ao carregar checkout: " + err.message);
+        const res = await fetch("/api/stripe/create-subscription", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: user.id,
+            email: user.email,
+            price_id: priceId,
+          }),
         });
-    });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.clientSecret) {
+          throw new Error(data.error || "Falha ao criar assinatura.");
+        }
+
+        setClientSecret(data.clientSecret);
+        setSubscriptionId(data.subscriptionId);
+      } catch (err: any) {
+        console.error("❌ Erro no checkout:", err.message);
+        setError("Erro ao carregar checkout: " + err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCheckout();
   }, [searchParams, router]);
 
-  if (error) return <div className="text-red-500 text-center mt-8">{error}</div>;
-  if (!clientSecret || !subscriptionId) return <p className="text-center mt-8">Carregando...</p>;
+  if (error) {
+    return <div className="text-red-500 text-center mt-8">{error}</div>;
+  }
+
+  if (loading || !clientSecret || !subscriptionId) {
+    return <p className="text-center mt-8">Carregando...</p>;
+  }
 
   return (
     <main className="py-10 px-4">
