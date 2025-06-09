@@ -1,21 +1,15 @@
-import { NextRequest, NextResponse } from "next/server"
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export function middleware(req: NextRequest) {
-  const url = req.nextUrl
-  const pathname = url.pathname
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next();
+  const supabase = createMiddlewareClient({ req, res });
+  await supabase.auth.getSession();
 
-  const isAdminRoute = pathname.startsWith("/admin")
-  const userEmail = req.cookies.get("sb-user")?.value
-
-  // Se for rota admin e o cookie do Supabase não existir, bloqueia
-  if (isAdminRoute && !userEmail) {
-    url.pathname = "/login"
-    return NextResponse.redirect(url)
-  }
-
-  return NextResponse.next()
+  return res;
 }
 
 export const config = {
-  matcher: ["/admin"],
-}
+  matcher: ["/checkout/:path*", "/assinatura/:path*"],
+};
