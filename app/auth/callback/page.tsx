@@ -8,13 +8,14 @@ export default function AuthCallbackPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirect") || "/"
+  const code = searchParams.get("code") || ""  // pega o código da URL
 
   useEffect(() => {
     const supabase = createPagesBrowserClient()
 
     const finishSignIn = async () => {
-      const { error } = await supabase.auth.exchangeCodeForSession()
-      
+      const { error } = await supabase.auth.exchangeCodeForSession(code)  // passa o código
+
       if (error) {
         console.error("Erro ao finalizar login:", error.message)
         router.replace("/login?error=auth")
@@ -24,7 +25,7 @@ export default function AuthCallbackPage() {
     }
 
     finishSignIn()
-  }, [router, redirectTo])
+  }, [router, redirectTo, code])
 
   return <p className="text-center mt-8">Finalizando login...</p>
 }
