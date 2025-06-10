@@ -64,12 +64,12 @@ export async function POST(req: Request) {
 
     const invoice = await stripe.invoices.retrieve(invoiceId, {
       expand: ["payment_intent"],
-    });
+    }) as Stripe.Invoice;
 
     debug("🧾 Invoice retrieved:", {
       id: invoice.id,
       status: invoice.status,
-      payment_intent_type: typeof invoice.payment_intent,
+      hasPaymentIntent: !!invoice.payment_intent,
     });
 
     const paymentIntent = invoice.payment_intent;
@@ -84,7 +84,9 @@ export async function POST(req: Request) {
         paymentIntent
       );
       return NextResponse.json(
-        { error: "No client_secret found. This subscription may not require payment." },
+        {
+          error: "No client_secret found. This subscription may not require payment.",
+        },
         { status: 500 }
       );
     }
