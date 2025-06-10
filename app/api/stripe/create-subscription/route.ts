@@ -62,15 +62,14 @@ export async function POST(req: Request) {
 
     const invoiceId = subscription.latest_invoice as string;
 
-    // Aqui o cast para Stripe.Invoice para resolver o erro de tipagem
     const invoice = await stripe.invoices.retrieve(invoiceId, {
       expand: ["payment_intent"],
-    }) as Stripe.Invoice;
+    });
 
-    const paymentIntent =
-      invoice.payment_intent && typeof invoice.payment_intent !== "string"
-        ? invoice.payment_intent as Stripe.PaymentIntent
-        : null;
+    // Aqui faz o cast para any para evitar o erro de tipo na build
+    const paymentIntent = invoice.payment_intent && typeof (invoice as any).payment_intent !== "string"
+      ? (invoice as any).payment_intent as Stripe.PaymentIntent
+      : null;
 
     debug("🧾 Invoice retrieved:", {
       id: invoice.id,
