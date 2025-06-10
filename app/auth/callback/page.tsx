@@ -8,7 +8,6 @@ export default function AuthCallbackPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirect") || "/"
-  const code = searchParams.get("code") || ""  // pega o código da URL
 
   useEffect(() => {
     const supabase = createPagesBrowserClient()
@@ -25,7 +24,7 @@ export default function AuthCallbackPage() {
     }
 
     finishSignIn()
-  }, [router, redirectTo, code])
+  }, [router, redirectTo])
 
   return <p className="text-center mt-8">Finalizando login...</p>
 }
