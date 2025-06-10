@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 console.log("🔐 Stripe key loaded:", process.env.STRIPE_SECRET_KEY);
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2022-11-15",
+});
 
 export async function POST(req: Request) {
   function debug(label: string, data: any) {
@@ -62,20 +64,36 @@ export async function POST(req: Request) {
 
     const invoiceId = subscription.latest_invoice as string;
 
-    const invoice = await stripe.invoices.retrieve(invoiceId, {
+    // Corrigido: invoice retorna um Response<Invoice>, extrair o objeto Invoice
+    const invoiceResponse = await stripe.invoices.retrieve(invoiceId, {
       expand: ["payment_intent"],
     });
-    
-    const paymentIntent = invoice.payment_intent && typeof invoice.payment_intent !== "string"
-      ? invoice.payment_intent as Stripe.PaymentIntent
-      : null;
-    
+
+    // Se for do tipo Response<Invoice>, extrair o objeto Invoice
+    const invoice =
+      'object' in invoiceResponse && invoiceResponse.object === 'invoice'
+        ? invoiceResponse
+        : null;
+
+    if (!invoice) {
+      console.error("❌ Invoice object not found.");
+      return NextResponse.json(
+        { error: "Invoice object not found." },
+        { status: 500 }
+      );
+    }
+
+    const paymentIntent =
+      invoice.payment_intent && typeof invoice.payment_intent !== "string"
+        ? (invoice.payment_intent as Stripe.PaymentIntent)
+        : null;
+
     debug("🧾 Invoice retrieved:", {
       id: invoice.id,
       status: invoice.status,
       hasPaymentIntent: !!paymentIntent,
     });
-    
+
     if (!paymentIntent || !("client_secret" in paymentIntent)) {
       console.error(
         "❌ No client_secret. Subscription may not require immediate payment.",
@@ -86,18 +104,17 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
-    
+
     debug("💳 PaymentIntent OK:", {
       id: paymentIntent.id,
       status: paymentIntent.status,
       client_secret: paymentIntent.client_secret,
     });
-    
+
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       subscriptionId: subscription.id,
     });
-    
   } catch (error: any) {
     console.error("❌ Error creating subscription:", error);
     return NextResponse.json(
