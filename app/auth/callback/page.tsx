@@ -8,15 +8,22 @@ export default function AuthCallbackPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirect") || "/"
+  const code = searchParams.get("code")
 
   useEffect(() => {
     const supabase = createPagesBrowserClient()
 
     const finishSignIn = async () => {
-      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href)
+      if (!code) {
+        console.error("Missing authentication code in URL")
+        router.replace("/login?error=missing-code")
+        return
+      }
+
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
 
       if (error) {
-        console.error("Erro ao finalizar login:", error.message)
+        console.error("Error finishing sign-in:", error.message)
         router.replace("/login?error=auth")
       } else {
         router.replace(redirectTo)
@@ -24,7 +31,7 @@ export default function AuthCallbackPage() {
     }
 
     finishSignIn()
-  }, [router, redirectTo])
+  }, [router, redirectTo, code])
 
-  return <p className="text-center mt-8">Finalizando login...</p>
+  return <p className="text-center mt-8">Finalizing login...</p>
 }
