@@ -64,43 +64,40 @@ export async function POST(req: Request) {
 
     const invoice = await stripe.invoices.retrieve(invoiceId, {
       expand: ["payment_intent"],
-    }) as Stripe.Invoice;
-
+    });
+    
+    const paymentIntent = invoice.payment_intent && typeof invoice.payment_intent !== "string"
+      ? invoice.payment_intent as Stripe.PaymentIntent
+      : null;
+    
     debug("🧾 Invoice retrieved:", {
       id: invoice.id,
       status: invoice.status,
-      hasPaymentIntent: !!invoice.payment_intent,
+      hasPaymentIntent: !!paymentIntent,
     });
-
-    const paymentIntent = invoice.payment_intent;
-
-    if (
-      !paymentIntent ||
-      typeof paymentIntent === "string" ||
-      !("client_secret" in paymentIntent)
-    ) {
+    
+    if (!paymentIntent || !("client_secret" in paymentIntent)) {
       console.error(
         "❌ No client_secret. Subscription may not require immediate payment.",
         paymentIntent
       );
       return NextResponse.json(
-        {
-          error: "No client_secret found. This subscription may not require payment.",
-        },
+        { error: "No client_secret found. This subscription may not require payment." },
         { status: 500 }
       );
     }
-
+    
     debug("💳 PaymentIntent OK:", {
       id: paymentIntent.id,
       status: paymentIntent.status,
       client_secret: paymentIntent.client_secret,
     });
-
+    
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       subscriptionId: subscription.id,
     });
+    
   } catch (error: any) {
     console.error("❌ Error creating subscription:", error);
     return NextResponse.json(
