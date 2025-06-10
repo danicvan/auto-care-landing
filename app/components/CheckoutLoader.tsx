@@ -33,8 +33,11 @@ export default function CheckoutLoader() {
         const { data: { user }, error: supabaseError } = await supabase.auth.getUser();
 
         if (supabaseError || !user?.email) {
-          console.error("❌ Erro ao obter usuário:", supabaseError || "Sem e-mail");
-          setError("Erro ao autenticar usuário.");
+          console.warn("Usuário não autenticado. Redirecionando para login.");
+          
+          // Redireciona para o login com callback para retornar após login
+          const callbackUrl = `/checkout?priceId=${priceId}&isAnnual=${isAnnual}`;
+          router.push(`/login?redirectTo=${encodeURIComponent(callbackUrl)}`);
           return;
         }
 
