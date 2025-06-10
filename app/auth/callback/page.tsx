@@ -14,7 +14,7 @@ export default function AuthCallbackPage() {
     const supabase = createPagesBrowserClient()
 
     const finishSignIn = async () => {
-      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href)
 
       if (error) {
         console.error("Erro ao finalizar login:", error.message)
