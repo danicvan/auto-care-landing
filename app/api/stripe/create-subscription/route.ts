@@ -66,9 +66,10 @@ export async function POST(req: Request) {
       expand: ["payment_intent"],
     });
 
-    // Aqui faz o cast para any para evitar o erro de tipo na build
-    const paymentIntent = invoice.payment_intent && typeof (invoice as any).payment_intent !== "string"
-      ? (invoice as any).payment_intent as Stripe.PaymentIntent
+    // antes da linha onde você usa invoice.payment_intent
+    const invoiceAny = invoice as any;
+    const paymentIntent = invoiceAny.payment_intent && typeof invoiceAny.payment_intent !== "string"
+      ? invoiceAny.payment_intent
       : null;
 
     debug("🧾 Invoice retrieved:", {
