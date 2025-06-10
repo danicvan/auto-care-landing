@@ -52,7 +52,7 @@ export default function LoginPage() {
         placeholder="Seu e-mail"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className="border border-gray-300 p-2 w-full rounded mb-4"
+        className="border border-gray-300 p-2 w-full rounded mb-4 text-black"
       />
 
       <button
