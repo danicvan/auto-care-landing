@@ -62,28 +62,14 @@ export async function POST(req: Request) {
 
     const invoiceId = subscription.latest_invoice as string;
 
-    // Corrigido: invoice retorna um Response<Invoice>, extrair o objeto Invoice
-    const invoiceResponse = await stripe.invoices.retrieve(invoiceId, {
+    // Aqui o cast para Stripe.Invoice para resolver o erro de tipagem
+    const invoice = await stripe.invoices.retrieve(invoiceId, {
       expand: ["payment_intent"],
-    });
-
-    // Se for do tipo Response<Invoice>, extrair o objeto Invoice
-    const invoice =
-      'object' in invoiceResponse && invoiceResponse.object === 'invoice'
-        ? invoiceResponse
-        : null;
-
-    if (!invoice) {
-      console.error("❌ Invoice object not found.");
-      return NextResponse.json(
-        { error: "Invoice object not found." },
-        { status: 500 }
-      );
-    }
+    }) as Stripe.Invoice;
 
     const paymentIntent =
       invoice.payment_intent && typeof invoice.payment_intent !== "string"
-        ? (invoice.payment_intent as Stripe.PaymentIntent)
+        ? invoice.payment_intent as Stripe.PaymentIntent
         : null;
 
     debug("🧾 Invoice retrieved:", {
@@ -113,6 +99,7 @@ export async function POST(req: Request) {
       clientSecret: paymentIntent.client_secret,
       subscriptionId: subscription.id,
     });
+
   } catch (error: any) {
     console.error("❌ Error creating subscription:", error);
     return NextResponse.json(
