@@ -13,8 +13,14 @@ export default function AuthCallbackPage() {
     const supabase = createPagesBrowserClient()
 
     const finishSignIn = async () => {
-      await supabase.auth.getSession() // importante para gravar o cookie
-      router.replace(redirectTo)
+      const { error } = await supabase.auth.exchangeCodeForSession()
+      
+      if (error) {
+        console.error("Erro ao finalizar login:", error.message)
+        router.replace("/login?error=auth")
+      } else {
+        router.replace(redirectTo)
+      }
     }
 
     finishSignIn()
