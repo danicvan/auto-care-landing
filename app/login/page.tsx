@@ -3,7 +3,7 @@
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
-import { toast } from "sonner" // ✅ novo
+import { toast } from "sonner"
 
 export default function LoginPage() {
   const supabase = useSupabaseClient()
@@ -14,6 +14,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
+  const [canRetry, setCanRetry] = useState(true)
 
   useEffect(() => {
     if (user) {
@@ -23,6 +24,22 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     setLoading(true)
+
+    const isValidEmail = /\S+@\S+\.\S+/.test(email)
+    if (!isValidEmail) {
+      toast.warning("Por favor, insira um e-mail válido.")
+      setLoading(false)
+      return
+    }
+
+    if (!canRetry) {
+      toast.warning("Aguarde alguns segundos antes de tentar novamente.")
+      setLoading(false)
+      return
+    }
+
+    setCanRetry(false)
+    setTimeout(() => setCanRetry(true), 30000)
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -34,7 +51,7 @@ export default function LoginPage() {
     if (error) {
       toast.error("Erro ao enviar link de login: " + error.message)
     } else {
-      toast.success("📩 Verifique seu e-mail para continuar o login.")
+      toast.success(`📩 Enviamos o link para ${email}`)
     }
 
     setLoading(false)
@@ -53,6 +70,9 @@ export default function LoginPage() {
           placeholder="Seu e-mail"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleLogin()
+          }}
           className="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-600 mb-4"
         />
 
@@ -61,7 +81,14 @@ export default function LoginPage() {
           disabled={loading || !email}
           className="w-full bg-blue-600 hover:bg-blue-700 transition text-white font-semibold py-2 px-4 rounded-md disabled:opacity-50"
         >
-          {loading ? "Enviando link..." : "Entrar com e-mail"}
+          {loading ? (
+            <div className="flex items-center justify-center gap-2">
+              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              Enviando...
+            </div>
+          ) : (
+            "Entrar com e-mail"
+          )}
         </button>
       </div>
     </main>
