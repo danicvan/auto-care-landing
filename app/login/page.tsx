@@ -3,6 +3,7 @@
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
+import { toast } from "sonner" // ✅ novo
 
 export default function LoginPage() {
   const supabase = useSupabaseClient()
@@ -12,8 +13,6 @@ export default function LoginPage() {
   const redirectTo = searchParams.get("redirect") || "/"
 
   const [email, setEmail] = useState("")
-  const [message, setMessage] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -23,21 +22,19 @@ export default function LoginPage() {
   }, [user, redirectTo, router])
 
   const handleLogin = async () => {
-    setMessage(null)
-    setError(null)
     setLoading(true)
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${redirectTo}`
-      }
+        emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${redirectTo}`,
+      },
     })
 
     if (error) {
-      setError("Erro: " + error.message)
+      toast.error("Erro ao enviar link de login: " + error.message)
     } else {
-      setMessage("📩 Verifique seu e-mail para continuar o login.")
+      toast.success("📩 Verifique seu e-mail para continuar o login.")
     }
 
     setLoading(false)
@@ -66,9 +63,6 @@ export default function LoginPage() {
         >
           {loading ? "Enviando link..." : "Entrar com e-mail"}
         </button>
-
-        {message && <p className="mt-4 text-green-500 text-center">{message}</p>}
-        {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
       </div>
     </main>
   )
