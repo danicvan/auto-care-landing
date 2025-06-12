@@ -7,33 +7,66 @@ import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react"
 export default function Header() {
   const session = useSession()
   const supabase = useSupabaseClient()
-  const isAdmin = session?.user?.email === "seu@email.com"
+  const isAdmin = session?.user?.email === "seu@email.com" // TODO: mover para .env ou variável global
 
   const logout = () => supabase.auth.signOut()
 
+  const navLinks = [
+    { href: "#sobre", label: "Sobre" },
+    { href: "#servicos", label: "Serviços" },
+    { href: "#recursos", label: "Recursos" },
+    { href: "#planos", label: "Planos" },
+    { href: "#depoimentos", label: "Depoimentos" },
+    { href: "#faq", label: "FAQ" },
+    { href: "#contato", label: "Contato" },
+  ]
+
   return (
-    <header className="fixed w-full bg-white dark:bg-gray-900 bg-opacity-90 dark:bg-opacity-90 z-50">
+    <header className="fixed w-full bg-white dark:bg-gray-900 bg-opacity-90 z-50 shadow-sm backdrop-blur">
       <nav className="container mx-auto px-6 py-3">
         <div className="flex justify-between items-center">
-          <Link href="/" className="flex items-center text-2xl font-bold text-blue-500">
+          {/* Logo */}
+          <Link
+            href="/"
+            className="flex items-center text-2xl font-bold text-blue-600 hover:opacity-90 transition"
+            aria-label="Auto Care - Home"
+          >
             <CarIcon className="w-6 h-6 mr-2" />
             Auto Care
           </Link>
-          <div className="hidden md:flex space-x-4 items-center">
-            <Link href="#sobre" className="hover:text-blue-500 transition-colors">Sobre</Link>
-            <Link href="#servicos" className="hover:text-blue-500 transition-colors">Serviços</Link>
-            <Link href="#recursos" className="hover:text-blue-500 transition-colors">Recursos</Link>
-            <Link href="#planos" className="hover:text-blue-500 transition-colors">Planos</Link>
-            <Link href="#depoimentos" className="hover:text-blue-500 transition-colors">Depoimentos</Link>
-            <Link href="#faq" className="hover:text-blue-500 transition-colors">FAQ</Link>
-            <Link href="#contato" className="hover:text-blue-500 transition-colors">Contato</Link>
 
-            {isAdmin && <Link href="/admin" className="text-sm text-orange-500">Admin</Link>}
+          {/* Menu Desktop */}
+          <div className="hidden md:flex items-center space-x-5 text-sm font-medium">
+            {navLinks.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors"
+              >
+                {label}
+              </Link>
+            ))}
+
+            {isAdmin && (
+              <Link href="/admin" className="text-orange-500 hover:text-orange-600 transition">
+                Admin
+              </Link>
+            )}
 
             {!session ? (
-              <Link href="/login" className="text-sm text-blue-500 underline">Login</Link>
+              <Link
+                href="/login"
+                className="text-blue-600 hover:text-blue-700 underline transition"
+              >
+                Login
+              </Link>
             ) : (
-              <button onClick={logout} className="text-sm text-red-500 underline">Sair</button>
+              <button
+                onClick={logout}
+                className="text-red-500 hover:text-red-600 underline transition"
+              >
+                Sair
+              </button>
             )}
           </div>
         </div>
