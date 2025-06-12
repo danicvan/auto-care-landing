@@ -7,7 +7,7 @@ import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react"
 export default function Header() {
   const session = useSession()
   const supabase = useSupabaseClient()
-  const isAdmin = session?.user?.email === "seu@email.com" // TODO: mover para .env ou variável global
+  const isAdmin = session?.user?.email === "seu@email.com"
 
   const logout = () => supabase.auth.signOut()
 
@@ -22,33 +22,35 @@ export default function Header() {
   ]
 
   return (
-    <header className="fixed w-full bg-white dark:bg-gray-900 bg-opacity-90 z-50 shadow-sm backdrop-blur">
-      <nav className="container mx-auto px-6 py-3">
+    <header className="fixed w-full bg-white dark:bg-gray-900/95 shadow-md backdrop-blur z-50">
+      <nav className="container mx-auto px-6 py-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link
             href="/"
-            className="flex items-center text-2xl font-bold text-blue-600 hover:opacity-90 transition"
-            aria-label="Auto Care - Home"
+            className="flex items-center text-2xl font-bold text-blue-600 hover:text-blue-700 transition-colors"
           >
-            <CarIcon className="w-6 h-6 mr-2" />
+            <CarIcon className="w-7 h-7 mr-2" />
             Auto Care
           </Link>
 
-          {/* Menu Desktop */}
-          <div className="hidden md:flex items-center space-x-5 text-sm font-medium">
+          {/* Navegação Desktop */}
+          <div className="hidden md:flex items-center space-x-6 text-sm font-medium">
             {navLinks.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}
-                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors"
+                className="text-gray-700 dark:text-gray-200 hover:text-blue-600 hover:underline underline-offset-4 transition"
               >
                 {label}
               </Link>
             ))}
 
             {isAdmin && (
-              <Link href="/admin" className="text-orange-500 hover:text-orange-600 transition">
+              <Link
+                href="/admin"
+                className="text-orange-600 dark:text-orange-400 font-semibold hover:text-orange-700 transition"
+              >
                 Admin
               </Link>
             )}
@@ -56,14 +58,14 @@ export default function Header() {
             {!session ? (
               <Link
                 href="/login"
-                className="text-blue-600 hover:text-blue-700 underline transition"
+                className="bg-blue-600 text-white px-4 py-1.5 rounded-md hover:bg-blue-700 transition shadow-sm"
               >
                 Login
               </Link>
             ) : (
               <button
                 onClick={logout}
-                className="text-red-500 hover:text-red-600 underline transition"
+                className="bg-red-500 text-white px-4 py-1.5 rounded-md hover:bg-red-600 transition shadow-sm"
               >
                 Sair
               </button>
