@@ -37,34 +37,39 @@ export default function LoginPage() {
     if (error) {
       setError("Erro: " + error.message)
     } else {
-      setMessage("Verifique seu e-mail para continuar o login.")
+      setMessage("📩 Verifique seu e-mail para continuar o login.")
     }
 
     setLoading(false)
   }
 
   return (
-    <main className="p-10 text-center max-w-md mx-auto">
-      <h1 className="text-2xl mb-4">Entrar</h1>
+    <main className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-700 to-indigo-900 flex items-center justify-center px-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md text-center">
+        <h1 className="text-3xl font-bold mb-4 text-gray-800">Bem-vindo de volta 👋</h1>
+        <p className="text-gray-600 mb-6">
+          Entre com seu e-mail para acessar sua conta.
+        </p>
 
-      <input
-        type="email"
-        placeholder="Seu e-mail"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="border border-gray-300 p-2 w-full rounded mb-4 text-black"
-      />
+        <input
+          type="email"
+          placeholder="Seu e-mail"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="border border-gray-300 px-4 py-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+        />
 
-      <button
-        onClick={handleLogin}
-        disabled={loading || !email}
-        className="bg-blue-500 text-white px-4 py-2 rounded w-full disabled:opacity-50"
-      >
-        {loading ? "Enviando..." : "Login com e-mail"}
-      </button>
+        <button
+          onClick={handleLogin}
+          disabled={loading || !email}
+          className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition disabled:opacity-50"
+        >
+          {loading ? "Enviando link..." : "Entrar com e-mail"}
+        </button>
 
-      {message && <p className="mt-4 text-green-600">{message}</p>}
-      {error && <p className="mt-4 text-red-600">{error}</p>}
+        {message && <p className="mt-4 text-green-600">{message}</p>}
+        {error && <p className="mt-4 text-red-600">{error}</p>}
+      </div>
     </main>
   )
 }
