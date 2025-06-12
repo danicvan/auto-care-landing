@@ -10,7 +10,9 @@ export default function LoginPage() {
   const user = useUser()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get("redirect") || "/"
+  const priceId = searchParams.get("priceId")
+  const isAnnual = searchParams.get("isAnnual")
+  const redirectTo = `/checkout?priceId=${priceId}&isAnnual=${isAnnual}`
 
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
@@ -44,7 +46,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback${redirectTo}`
+        emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`
       },
     })
 
