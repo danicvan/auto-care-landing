@@ -52,24 +52,26 @@ export async function POST(req: Request) {
         payment_method_types: ["card"],
         save_default_payment_method: "on_subscription",
       },
-      expand: ["latest_invoice.payment_intent"], // ✅ ESSENCIAL
+      expand: ["latest_invoice.payment_intent"], // ✅ necessário para acessar diretamente
     });
-    
+
     debug("📦 Subscription criada:", {
       id: subscription.id,
       status: subscription.status,
-      latest_invoice: subscription.latest_invoice,
     });
-    
-    const invoice = subscription.latest_invoice as Stripe.Invoice;
-    const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
-    
+
+    const invoice = subscription.latest_invoice as Stripe.Invoice & {
+      payment_intent: Stripe.PaymentIntent;
+    };
+
+    const paymentIntent = invoice.payment_intent;
+
     debug("🧾 Invoice expandida:", {
       id: invoice.id,
       status: invoice.status,
       payment_intent_status: paymentIntent?.status,
     });
-    
+
     if (!paymentIntent?.client_secret) {
       console.error("❌ Sem client_secret. Assinatura pode não exigir pagamento.");
       return NextResponse.json(
@@ -77,17 +79,17 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
-    
+
     debug("💳 PaymentIntent OK:", {
       id: paymentIntent.id,
       status: paymentIntent.status,
       client_secret: paymentIntent.client_secret,
     });
-    
+
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       subscriptionId: subscription.id,
-    });    
+    });
 
   } catch (error: any) {
     console.error("❌ Error creating subscription:", error);
