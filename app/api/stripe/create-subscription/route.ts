@@ -52,53 +52,42 @@ export async function POST(req: Request) {
         payment_method_types: ["card"],
         save_default_payment_method: "on_subscription",
       },
+      expand: ["latest_invoice.payment_intent"], // ✅ ESSENCIAL
     });
-
-    debug("📦 Subscription created:", {
+    
+    debug("📦 Subscription criada:", {
       id: subscription.id,
       status: subscription.status,
       latest_invoice: subscription.latest_invoice,
     });
-
-    const invoiceId = subscription.latest_invoice as string;
-
-    const invoice = await stripe.invoices.retrieve(invoiceId, {
-      expand: ["payment_intent"],
-    });
-
-    // antes da linha onde você usa invoice.payment_intent
-    const invoiceAny = invoice as any;
-    const paymentIntent = invoiceAny.payment_intent && typeof invoiceAny.payment_intent !== "string"
-      ? invoiceAny.payment_intent
-      : null;
-
-    debug("🧾 Invoice retrieved:", {
+    
+    const invoice = subscription.latest_invoice as Stripe.Invoice;
+    const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+    
+    debug("🧾 Invoice expandida:", {
       id: invoice.id,
       status: invoice.status,
-      hasPaymentIntent: !!paymentIntent,
+      payment_intent_status: paymentIntent?.status,
     });
-
-    if (!paymentIntent || !("client_secret" in paymentIntent)) {
-      console.error(
-        "❌ No client_secret. Subscription may not require immediate payment.",
-        paymentIntent
-      );
+    
+    if (!paymentIntent?.client_secret) {
+      console.error("❌ Sem client_secret. Assinatura pode não exigir pagamento.");
       return NextResponse.json(
         { error: "No client_secret found. This subscription may not require payment." },
         { status: 500 }
       );
     }
-
+    
     debug("💳 PaymentIntent OK:", {
       id: paymentIntent.id,
       status: paymentIntent.status,
       client_secret: paymentIntent.client_secret,
     });
-
+    
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       subscriptionId: subscription.id,
-    });
+    });    
 
   } catch (error: any) {
     console.error("❌ Error creating subscription:", error);
