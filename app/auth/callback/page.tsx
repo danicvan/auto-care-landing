@@ -1,44 +1,22 @@
-"use client"
+"use client";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 
-import { useEffect, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs"
-
-export default function AuthCallbackPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const code = searchParams.get("code")
-  const [loading, setLoading] = useState(true)
+export default function AuthCallback() {
+  const supabase = useSupabaseClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    const supabase = createPagesBrowserClient()
+    const redirectTo = searchParams.get("redirect") || "/";
 
-    const finishSignIn = async () => {
-      if (!code) {
-        console.error("❌ Código ausente")
-        router.replace("/login?error=missing-code")
-        return
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        router.push(redirectTo);
       }
+    });
+  }, [supabase, router, searchParams]);
 
-      const { error } = await supabase.auth.exchangeCodeForSession(code)
-
-      if (error) {
-        console.error("❌ Erro ao autenticar:", error.message)
-        router.replace("/login?error=auth")
-        return
-      }
-
-      router.replace("/") // ou qualquer página padrão
-    }
-
-    finishSignIn().finally(() => setLoading(false))
-  }, [router, code])
-
-  return (
-    <main className="min-h-screen flex items-center justify-center px-4 bg-white dark:bg-gray-900 text-gray-800 dark:text-white">
-      {loading ? (
-        <p className="text-center text-lg">Autenticando...</p>
-      ) : null}
-    </main>
-  )
+  return <p className="text-center mt-10">Autenticando...</p>;
 }

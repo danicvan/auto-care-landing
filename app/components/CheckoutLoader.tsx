@@ -34,10 +34,9 @@ export default function CheckoutLoader() {
 
         if (supabaseError || !user?.email) {
           console.warn("Usuário não autenticado. Redirecionando para login.");
-          
-          // Redireciona para o login com callback para retornar após login
+    
           const callbackUrl = `/checkout?priceId=${priceId}&isAnnual=${isAnnual}`;
-          router.push(`/login?redirectTo=${encodeURIComponent(callbackUrl)}`);
+          router.push(`/login?redirect=${encodeURIComponent(callbackUrl)}`);
           return;
         }
 

@@ -10,8 +10,24 @@ export default function LoginPage() {
   const user = useUser()
   const router = useRouter()
   const searchParams = useSearchParams()
+
   const priceId = searchParams.get("priceId")
   const isAnnual = searchParams.get("isAnnual")
+  const fallbackRedirect = searchParams.get("redirect")
+
+  // ⚠️ Novo trecho para recuperar parâmetros do redirect se estiverem faltando
+  useEffect(() => {
+    if ((!priceId || !isAnnual) && fallbackRedirect) {
+      const urlParams = new URLSearchParams(fallbackRedirect.split("?")[1])
+      const recoveredPriceId = urlParams.get("priceId")
+      const recoveredIsAnnual = urlParams.get("isAnnual")
+
+      if (recoveredPriceId && recoveredIsAnnual) {
+        router.replace(`/login?priceId=${recoveredPriceId}&isAnnual=${recoveredIsAnnual}`)
+      }
+    }
+  }, [priceId, isAnnual, fallbackRedirect, router])
+
   const redirectTo = `/checkout?priceId=${priceId}&isAnnual=${isAnnual}`
 
   const [email, setEmail] = useState("")
@@ -43,10 +59,12 @@ export default function LoginPage() {
     setCanRetry(false)
     setTimeout(() => setCanRetry(true), 30000)
 
+    const callbackUrl = `/auth/callback?redirect=${encodeURIComponent(redirectTo)}`
+
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`
+        emailRedirectTo: `${window.location.origin}${callbackUrl}`,
       },
     })
 
