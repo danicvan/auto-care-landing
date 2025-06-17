@@ -52,7 +52,7 @@ export async function POST(req: Request) {
         payment_method_types: ["card"],
         save_default_payment_method: "on_subscription",
       },
-      expand: ["latest_invoice.payment_intent"], // ✅ necessário para acessar diretamente
+      expand: ["latest_invoice.payment_intent"],
     });
 
     debug("📦 Subscription criada:", {

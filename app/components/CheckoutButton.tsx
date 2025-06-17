@@ -1,29 +1,44 @@
-'use client'
+"use client"
 
-import { useRouter } from 'next/navigation'
+import { loadStripe } from "@stripe/stripe-js"
 
-export const CheckoutButton = ({
-  priceId,
-  isAnnual
-}: {
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+
+interface CheckoutButtonProps {
   priceId: string
   isAnnual: boolean
-}) => {
-  const router = useRouter()
+}
 
-  const handleClick = () => {
-    console.log('🔍 Enviando para checkout com:', { priceId, isAnnual })
-    router.push(`/checkout?priceId=${priceId}&isAnnual=${isAnnual}`)
+export function CheckoutButton({ priceId, isAnnual }: CheckoutButtonProps) {
+  const handleSubscribe = async () => {
+    try {
+      const res = await fetch("/api/create-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priceId, isAnnual }),
+      })
+
+      const data = await res.json()
+
+      if (!data.sessionId) {
+        alert("Erro ao criar assinatura.")
+        return
+      }
+
+      const stripe = await stripePromise
+      await stripe?.redirectToCheckout({ sessionId: data.sessionId })
+    } catch (err) {
+      console.error("Erro no handleSubscribe:", err)
+      alert("Erro ao redirecionar para o checkout.")
+    }
   }
-
-  const label = isAnnual ? 'Começar Plano Anual' : 'Assinar Plano Mensal'
 
   return (
     <button
-      onClick={handleClick}
-      className="w-full py-3 px-6 mt-2 rounded-md font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
+      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      onClick={handleSubscribe}
     >
-      {label}
+      Assinar agora
     </button>
   )
 }
