@@ -9,27 +9,30 @@ export async function GET(req: NextRequest) {
   const subscriptionId = searchParams.get("subscriptionId");
 
   if (!subscriptionId) {
-    return NextResponse.json({ error: "subscriptionId ausente" }, { status: 400 });
+    return NextResponse.json({ error: "Parâmetro 'subscriptionId' é obrigatório." }, { status: 400 });
   }
 
   try {
+    // Recupera os dados da assinatura com expansão de customer e produto
     const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
       expand: ["customer", "items.data.price.product"],
     });
 
     const item = subscription.items.data[0];
-    const plan = item.price.nickname || item.price.id;
+    const plan = item.price.nickname ?? item.price.id;
     const priceId = item.price.id;
-    const stripeCustomerId = subscription.customer as string;
+    const stripeCustomerId = typeof subscription.customer === "string"
+      ? subscription.customer
+      : subscription.customer?.id ?? "desconhecido";
 
-    const unixEnd = (subscription as any).current_period_end;
+    const unixEnd = subscription.current_period_end;
 
-    const email =
-      typeof subscription.customer === "object" && subscription.customer && "email" in subscription.customer
-        ? (subscription.customer as Stripe.Customer).email ?? "desconhecido"
-        : "desconhecido";
+    const email = typeof subscription.customer === "object" && subscription.customer && "email" in subscription.customer
+      ? (subscription.customer as Stripe.Customer).email ?? "desconhecido"
+      : "desconhecido";
 
-    await supabase.from("subscriptions").insert([
+    // Salva no banco de dados
+    const { error } = await supabase.from("subscriptions").insert([
       {
         subscription_id: subscription.id,
         stripe_customer: stripeCustomerId,
@@ -41,11 +44,21 @@ export async function GET(req: NextRequest) {
       },
     ]);
 
+    if (error) {
+      console.error("Erro ao salvar no Supabase:", error);
+      return NextResponse.json({ error: "Erro ao salvar assinatura no banco." }, { status: 500 });
+    }
+
+    // Envia o e-mail de confirmação
     await resend.emails.send({
       from: "danicvan@hotmail.com",
       to: email,
       subject: "Confirmação da sua assinatura",
-      html: `<p>Plano: ${plan}, Status: ${subscription.status}, Fim: ${new Date(unixEnd * 1000).toLocaleDateString("pt-BR")}</p>`,
+      html: `
+        <p><strong>Plano:</strong> ${plan}</p>
+        <p><strong>Status:</strong> ${subscription.status}</p>
+        <p><strong>Válido até:</strong> ${new Date(unixEnd * 1000).toLocaleDateString("pt-BR")}</p>
+      `,
     });
 
     return NextResponse.json({
@@ -54,8 +67,8 @@ export async function GET(req: NextRequest) {
       plan,
       return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success?subscriptionId=${subscriptionId}`,
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error("Erro ao buscar assinatura:", err);
-    return NextResponse.json({ error: "Erro ao consultar assinatura" }, { status: 500 });
+    return NextResponse.json({ error: "Erro interno ao consultar assinatura." }, { status: 500 });
   }
 }
