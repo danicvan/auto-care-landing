@@ -15,7 +15,6 @@ export default function LoginPage() {
   const isAnnual = searchParams.get("isAnnual")
   const fallbackRedirect = searchParams.get("redirect")
 
-  // ⚠️ Novo trecho para recuperar parâmetros do redirect se estiverem faltando
   useEffect(() => {
     if ((!priceId || !isAnnual) && fallbackRedirect) {
       const urlParams = new URLSearchParams(fallbackRedirect.split("?")[1])
@@ -45,7 +44,7 @@ export default function LoginPage() {
 
     const isValidEmail = /\S+@\S+\.\S+/.test(email)
     if (!isValidEmail) {
-      toast.warning("Por favor, insira um e-mail válido.")
+      toast.warning("Insira um e-mail válido.")
       setLoading(false)
       return
     }
@@ -59,53 +58,57 @@ export default function LoginPage() {
     setCanRetry(false)
     setTimeout(() => setCanRetry(true), 30000)
 
-    const callbackUrl = `/auth/callback?redirect=${encodeURIComponent(redirectTo)}`
+    try {
+      const callbackUrl = `/auth/callback?redirect=${encodeURIComponent(redirectTo)}`
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}${callbackUrl}`,
+        },
+      })
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}${callbackUrl}`,
-      },
-    })
+      if (error) {
+        throw error
+      }
 
-    if (error) {
-      toast.error("Erro ao enviar link de login: " + error.message)
-    } else {
       toast.success(`📩 Enviamos o link para ${email}`)
+    } catch (err: any) {
+      toast.error("Erro ao enviar o link. Tente novamente.")
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (
-    <main className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-gray-100 dark:bg-gray-800 rounded-xl shadow-lg p-8">
-        <h1 className="text-3xl font-bold mb-4 text-center">Entrar</h1>
-        <p className="text-center text-gray-600 dark:text-gray-300 mb-6">
-          Digite seu e-mail para receber um link de acesso.
+    <main className="min-h-screen flex items-center justify-center px-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+      <div className="w-full max-w-md bg-gray-100 dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+        <h1 className="text-3xl font-bold text-center mb-2">Acessar sua conta</h1>
+        <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
+          Enviaremos um link mágico para seu e-mail.
         </p>
 
+        <label htmlFor="email" className="sr-only">E-mail</label>
         <input
+          id="email"
           type="email"
-          placeholder="Seu e-mail"
+          placeholder="Digite seu e-mail"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleLogin()
-          }}
+          onKeyDown={(e) => e.key === "Enter" && handleLogin()}
           className="w-full px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-600 mb-4"
         />
 
         <button
           onClick={handleLogin}
           disabled={loading || !email}
-          className="w-full bg-blue-600 hover:bg-blue-700 transition text-white font-semibold py-2 px-4 rounded-md disabled:opacity-50"
+          className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 transition text-white font-semibold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-busy={loading}
         >
           {loading ? (
-            <div className="flex items-center justify-center gap-2">
-              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            <>
+              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
               Enviando...
-            </div>
+            </>
           ) : (
             "Entrar com e-mail"
           )}
