@@ -1,85 +1,83 @@
-"use client";
+"use client"
 
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { toast } from "sonner";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
 
 export default function LoginPage() {
-  const supabase = useSupabaseClient();
-  const user = useUser();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const supabase = useSupabaseClient()
+  const user = useUser()
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
-  const priceId = searchParams.get("priceId");
-  const isAnnual = searchParams.get("isAnnual");
-  const fallbackRedirect = searchParams.get("redirect");
+  const priceId = searchParams.get("priceId")
+  const isAnnual = searchParams.get("isAnnual")
+  const fallbackRedirect = searchParams.get("redirect")
 
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [canRetry, setCanRetry] = useState(true);
-
-  const redirectTo = useMemo(
-    () => `/checkout?priceId=${priceId}&isAnnual=${isAnnual}`,
-    [priceId, isAnnual]
-  );
-
-  // Recupera params do fallback se necessário
   useEffect(() => {
     if ((!priceId || !isAnnual) && fallbackRedirect) {
-      const urlParams = new URLSearchParams(fallbackRedirect.split("?")[1] || "");
-      const recoveredPriceId = urlParams.get("priceId");
-      const recoveredIsAnnual = urlParams.get("isAnnual");
+      const urlParams = new URLSearchParams(fallbackRedirect.split("?")[1])
+      const recoveredPriceId = urlParams.get("priceId")
+      const recoveredIsAnnual = urlParams.get("isAnnual")
 
       if (recoveredPriceId && recoveredIsAnnual) {
-        router.replace(`/login?priceId=${recoveredPriceId}&isAnnual=${recoveredIsAnnual}`);
+        router.replace(`/login?priceId=${recoveredPriceId}&isAnnual=${recoveredIsAnnual}`)
       }
     }
-  }, [priceId, isAnnual, fallbackRedirect, router]);
+  }, [priceId, isAnnual, fallbackRedirect, router])
 
-  // Redireciona usuário logado
+  const redirectTo = `/checkout?priceId=${priceId}&isAnnual=${isAnnual}`
+
+  const [email, setEmail] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [canRetry, setCanRetry] = useState(true)
+
   useEffect(() => {
     if (user) {
-      router.push(redirectTo);
+      router.push(redirectTo)
     }
-  }, [user, redirectTo, router]);
+  }, [user, redirectTo, router])
 
-  const handleLogin = useCallback(async () => {
-    setLoading(true);
+  const handleLogin = async () => {
+    setLoading(true)
 
-    const isValidEmail = /\S+@\S+\.\S+/.test(email);
+    const isValidEmail = /\S+@\S+\.\S+/.test(email)
     if (!isValidEmail) {
-      toast.warning("Insira um e-mail válido.");
-      setLoading(false);
-      return;
+      toast.warning("Insira um e-mail válido.")
+      setLoading(false)
+      return
     }
 
     if (!canRetry) {
-      toast.warning("Aguarde alguns segundos antes de tentar novamente.");
-      setLoading(false);
-      return;
+      toast.warning("Aguarde alguns segundos antes de tentar novamente.")
+      setLoading(false)
+      return
     }
 
-    setCanRetry(false);
-    setTimeout(() => setCanRetry(true), 30000);
+    setCanRetry(false)
+    setTimeout(() => setCanRetry(true), 30000)
 
     try {
-      const callbackUrl = `/auth/callback?redirect=${encodeURIComponent(redirectTo)}`;
+      const callbackUrl = `/auth/callback?redirect=${encodeURIComponent(redirectTo)}`
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: `${window.location.origin}${callbackUrl}`,
         },
-      });
+      })
 
-      if (error) throw error;
-      toast.success(`📩 Enviamos o link para ${email}`);
-    } catch (err) {
-      toast.error("Erro ao enviar o link. Tente novamente.");
+      if (error) {
+        throw error
+      }
+
+      toast.success(`📩 Enviamos o link para ${email}`)
+    } catch (err: any) {
+      toast.error("Erro ao enviar o link. Tente novamente.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [email, redirectTo, supabase, canRetry]);
+  }
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
@@ -117,5 +115,5 @@ export default function LoginPage() {
         </button>
       </div>
     </main>
-  );
+  )
 }
